@@ -1,0 +1,30 @@
+{
+  "name": "skill-journal",
+  "version": "1.0.0",
+  "description": "Visual UI for browsing and editing Claude Code skills",
+  "main": "server/index.js",
+  "bin": {
+    "journal": "./bin/journal.js"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js --dev"
+  },
+  "keywords": [
+    "claude",
+    "skills",
+    "markdown"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "chokidar": "^5.0.0",
+    "express": "^5.2.1",
+    "gray-matter": "^4.0.3",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.1",
+    "simple-git": "^3.36.0"
+  }
+}

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skill Journal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/markdown.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css" id="hljs-theme">
+</head>
+<body>
+
+  <!-- INTRO ANIMATION -->
+  <div id="intro-overlay">
+    <div class="intro-scene">
+      <div class="head-wrapper">
+        <div class="robot-head">
+          <!-- Front face -->
+          <div class="head-face head-front">
+            <div class="face-plate">
+              <div class="eye left-eye">
+                <div class="eye-ring"></div>
+                <div class="eye-pupil"></div>
+              </div>
+              <div class="eye right-eye">
+                <div class="eye-ring"></div>
+                <div class="eye-pupil"></div>
+              </div>
+              <div class="mouth-slit"></div>
+            </div>
+          </div>
+          <!-- Back face (the panel) -->
+          <div class="head-face head-back">
+            <div class="back-panel">
+              <div class="panel-screws">
+                <span class="screw"></span>
+                <span class="screw"></span>
+                <span class="screw"></span>
+                <span class="screw"></span>
+              </div>
+              <div class="panel-label">SK-J /// NEURAL ACCESS</div>
+              <div class="panel-circuits">
+                <div class="circuit c1"></div>
+                <div class="circuit c2"></div>
+                <div class="circuit c3"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Side faces -->
+          <div class="head-face head-left"></div>
+          <div class="head-face head-right"></div>
+          <div class="head-face head-top"></div>
+          <div class="head-face head-bottom"></div>
+        </div>
+      </div>
+      <div class="intro-text">
+        <span class="intro-label">SKILL JOURNAL</span>
+        <span class="intro-sub">neural access port</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app-shell" class="app-hidden">
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-nav">
+          <div class="brand">
+            <div class="brand-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.6"/>
+                <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+                <path d="M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" stroke-width="0.8" opacity="0.3"/>
+              </svg>
+            </div>
+            <h1>Skill Journal</h1>
+          </div>
+          <div class="nav-buttons">
+            <button class="nav-btn" data-view="dashboard" title="Dashboard">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+            </button>
+            <button class="nav-btn" data-view="graph" title="Neural Map">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="4" cy="4" r="2"/><circle cx="12" cy="4" r="2"/><circle cx="8" cy="12" r="2"/><line x1="5.5" y1="5.5" x2="7" y2="10.5"/><line x1="10.5" y1="5.5" x2="9" y2="10.5"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="search-container"></div>
+      </div>
+      <div id="skill-tree"></div>
+      <div class="sidebar-footer">
+        <span class="footer-pulse"></span>
+        <span class="footer-text">neural link active</span>
+      </div>
+    </aside>
+    <main id="content">
+      <div id="welcome">
+        <div class="welcome-inner">
+          <div class="welcome-icon">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="28" stroke="var(--copper)" stroke-width="1" stroke-dasharray="4 4" opacity="0.4"/>
+              <circle cx="32" cy="32" r="18" stroke="var(--copper)" stroke-width="1.5" opacity="0.6"/>
+              <circle cx="32" cy="32" r="4" fill="var(--copper)" opacity="0.8"/>
+              <path d="M32 4v12M32 48v12M4 32h12M48 32h12" stroke="var(--copper)" stroke-width="0.8" opacity="0.3"/>
+            </svg>
+          </div>
+          <h2>Neural Access Port</h2>
+          <p>Select a skill module from the sidebar to inspect its configuration.</p>
+          <div class="welcome-hint">
+            <kbd>&#8984;K</kbd> to search &middot; <span class="hint-link" data-view="dashboard">open dashboard</span>
+          </div>
+        </div>
+      </div>
+      <div id="file-header" class="hidden">
+        <div id="file-meta"></div>
+        <div id="file-actions">
+          <button id="btn-frontmatter" class="btn hidden">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM11 10v4M9 12h4"/></svg>
+            Config
+          </button>
+          <button id="btn-edit" class="btn">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 1.5l3 3L5 14H2v-3z"/></svg>
+            Edit
+          </button>
+          <button id="btn-save" class="btn btn-primary hidden">Save</button>
+          <button id="btn-cancel" class="btn hidden">Cancel</button>
+        </div>
+      </div>
+      <div id="viewer-tabs" class="hidden">
+        <button class="tab active" data-tab="content">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v2H2zM2 6h8v2H2zM2 10h10v2H2zM2 14h6v2H2z"/></svg>
+          Content
+        </button>
+        <button class="tab" data-tab="permissions">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L2 4v4c0 4 2.5 6 6 7 3.5-1 6-3 6-7V4z"/></svg>
+          Permissions
+        </button>
+        <button class="tab" data-tab="history">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 107 7h-3a4 4 0 11-4-4V1z"/><path d="M8 4v4l3 2"/></svg>
+          History
+        </button>
+      </div>
+      <div id="viewer" class="hidden"></div>
+      <div id="editor-container" class="hidden"></div>
+      <div id="dashboard-view" class="hidden"></div>
+      <div id="frontmatter-editor" class="hidden"></div>
+      <div id="diff-view" class="hidden"></div>
+      <div id="history-view" class="hidden"></div>
+      <div id="permissions-view" class="hidden"></div>
+      <div id="graph-view" class="hidden"></div>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/search.js"></script>
+  <script src="/js/sidebar.js"></script>
+  <script src="/js/viewer.js"></script>
+  <script src="/js/editor.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/frontmatter-editor.js"></script>
+  <script src="/js/diff-viewer.js"></script>
+  <script src="/js/permissions.js"></script>
+  <script src="/js/graph.js"></script>
+  <script src="/js/history.js"></script>
+  <script src="/js/bulk.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
