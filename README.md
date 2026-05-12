@@ -2,7 +2,7 @@
 
 <img src="public/logo.png" alt="Popopen" width="280" />
 
-<p>A visual UI for browsing, editing, and managing <a href="https://claude.ai/code">Claude Code</a> skills.<br/>One command to pop open everything in your <code>~/.claude/skills/</code> directory.</p>
+<p>A visual UI for browsing, editing, and managing coding agent skills.<br/>One command to pop open everything in your <code>~/.claude/skills/</code> and <code>~/.agents/skills/</code> directories.</p>
 
 [![npm version](https://img.shields.io/npm/v/popopen?style=flat-square&color=007AFF)](https://www.npmjs.com/package/popopen)
 [![npm downloads](https://img.shields.io/npm/dm/popopen?style=flat-square&color=5856D6)](https://www.npmjs.com/package/popopen)
@@ -46,7 +46,7 @@ PORT=4000 popopen   # use a different port
 
 ## How it works
 
-Popopen is a local Express server that reads from `~/.claude/skills/` (custom skills) and `~/.agents/skills/` (skills installed via the Claude Code CLI). All data stays on your machine — nothing is sent to any external service except GitHub API calls for the update checker.
+Popopen is a local Express server that reads from `~/.claude/skills/` (custom skills) and `~/.agents/skills/` (agent-installed skills). It works with any coding agent that follows the skills convention. All data stays on your machine — nothing is sent to any external service except GitHub API calls for the update checker.
 
 The server binds to `127.0.0.1` only and is not accessible from other machines on your network.
 
@@ -80,5 +80,5 @@ npm uninstall -g popopen
 ---
 
 <div align="center">
-<sub>Built for <a href="https://claude.ai/code">Claude Code</a> · <a href="https://github.com/mriziq/popopen/releases">Changelog</a> · <a href="docs/releasing.md">Contributing</a></sub>
+<sub>Built for coding agents · <a href="https://github.com/mriziq/popopen/releases">Changelog</a> · <a href="docs/releasing.md">Contributing</a></sub>
 </div>
