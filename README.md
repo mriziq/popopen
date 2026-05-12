@@ -1,6 +1,17 @@
-# Popopen
+<div align="center">
 
-A local web UI for browsing, editing, and managing [Claude Code](https://claude.ai/code) skills. Run one command to pop open a visual interface for everything in your `~/.claude/skills/` directory.
+<img src="logos/01-lid-pop-horizontal.svg" alt="Popopen" width="280" />
+
+<p>A visual UI for browsing, editing, and managing <a href="https://claude.ai/code">Claude Code</a> skills.<br/>One command to pop open everything in your <code>~/.claude/skills/</code> directory.</p>
+
+[![npm version](https://img.shields.io/npm/v/popopen?style=flat-square&color=007AFF)](https://www.npmjs.com/package/popopen)
+[![npm downloads](https://img.shields.io/npm/dm/popopen?style=flat-square&color=5856D6)](https://www.npmjs.com/package/popopen)
+[![License: ISC](https://img.shields.io/badge/license-ISC-34C759?style=flat-square)](LICENSE)
+[![Node.js ≥18](https://img.shields.io/badge/node-%E2%89%A518-FF9F0A?style=flat-square)](https://nodejs.org)
+
+</div>
+
+---
 
 ## Install
 
@@ -18,10 +29,8 @@ popopen
 
 Starts the server on `http://localhost:3377` and opens it in your browser. If already running, the command reopens the browser without starting a second instance.
 
-To use a different port:
-
 ```bash
-PORT=4000 popopen
+PORT=4000 popopen   # use a different port
 ```
 
 ## Features
@@ -45,23 +54,16 @@ Analytics are stored in `~/.popopen/analytics.json`.
 
 ## Local Development
 
-Clone the repo and install dependencies:
-
 ```bash
 git clone https://github.com/mriziq/popopen.git
 cd popopen
 npm install
-```
-
-Start the dev server:
-
-```bash
 npm run dev
 ```
 
-This starts the Express server at `http://localhost:3377`. The server watches for file changes in `~/.claude/skills/` via SSE — refresh the browser to pick up UI changes during development (no hot reload).
+Starts the Express server at `http://localhost:3377`. Refresh the browser to pick up UI changes during development.
 
-To test against a different skills directory, set `SKILLS_DIR` and `AGENTS_DIR` before starting:
+To test against a different skills directory:
 
 ```bash
 SKILLS_DIR=~/my-test-skills npm run dev
@@ -74,3 +76,9 @@ The entry point is `server/index.js`. Static assets are served from `public/`. A
 ```bash
 npm uninstall -g popopen
 ```
+
+---
+
+<div align="center">
+<sub>Built for <a href="https://claude.ai/code">Claude Code</a> · <a href="https://github.com/mriziq/popopen/releases">Changelog</a> · <a href="docs/releasing.md">Contributing</a></sub>
+</div>
