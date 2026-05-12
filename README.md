@@ -2,7 +2,7 @@
 
 <img src="public/logo.png" alt="Popopen" width="280" />
 
-<p>A visual UI for browsing, editing, and managing coding agent skills.<br/>One command to pop open everything in your <code>~/.claude/skills/</code> and <code>~/.agents/skills/</code> directories.</p>
+<p>A visual UI for browsing, editing, and managing coding agent skills.<br/>Anywhere, anytime — just run <code>popopen</code>.</p>
 
 [![npm version](https://img.shields.io/npm/v/popopen?style=flat-square&color=007AFF)](https://www.npmjs.com/package/popopen)
 [![npm downloads](https://img.shields.io/npm/dm/popopen?style=flat-square&color=5856D6)](https://www.npmjs.com/package/popopen)
@@ -27,7 +27,7 @@ npm install -g popopen
 popopen
 ```
 
-Starts the server on `http://localhost:3377` and opens it in your browser. If already running, the command reopens the browser without starting a second instance.
+That's it. Run it from any directory, any time — Popopen opens in your browser instantly. If it's already running, it just pops the tab back up. No setup, no config, no arguments required.
 
 ```bash
 PORT=4000 popopen   # use a different port
