@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="logos/01-lid-pop-horizontal.svg" alt="Popopen" width="280" />
+<img src="public/logo.png" alt="Popopen" width="280" />
 
 <p>A visual UI for browsing, editing, and managing <a href="https://claude.ai/code">Claude Code</a> skills.<br/>One command to pop open everything in your <code>~/.claude/skills/</code> directory.</p>
 
