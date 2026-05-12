@@ -1980,6 +1980,7 @@ body { display: flex; }
   flex-shrink: 0;
   transition: background 0.12s, color 0.12s, border-color 0.12s;
   margin-right: 4px;
+  text-decoration: none;
 }
 
 .help-btn:hover {
