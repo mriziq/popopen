@@ -4,7 +4,7 @@
   "description": "Visual UI for browsing and editing Claude Code skills",
   "main": "server/index.js",
   "bin": {
-    "popopen": "./bin/popopen.js"
+    "popopen": "bin/popopen.js"
   },
   "files": [
     "bin",
@@ -30,7 +30,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mriziq/popopen.git"
+    "url": "git+https://github.com/mriziq/popopen.git"
   },
   "homepage": "https://github.com/mriziq/popopen#readme",
   "dependencies": {
