@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" width="240" height="160" role="img" aria-label="Popopen SUV with hood popped">
+  <defs>
+    <linearGradient id="body-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D1D1D6"/>
+      <stop offset="100%" stop-color="#8E8E93"/>
+    </linearGradient>
+    <linearGradient id="hood-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E5E5EA"/>
+      <stop offset="100%" stop-color="#AEAEB2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="120" cy="140" rx="98" ry="6" fill="#1C1C1E" opacity="0.18"/>
+
+  <!-- SUV body (side profile) -->
+  <path d="
+    M30 110
+    L30 90
+    Q30 78 42 78
+    L70 78
+    Q78 60 96 56
+    L160 56
+    Q176 56 184 72
+    L196 80
+    Q210 82 214 90
+    L214 110
+    Z"
+    fill="url(#body-grad)" stroke="#1C1C1E" stroke-width="2" stroke-linejoin="round"/>
+
+  <!-- windows -->
+  <path d="M82 78 Q90 62 102 60 L142 60 Q152 60 158 76 Z"
+    fill="#2C2C2E" opacity="0.85"/>
+  <line x1="120" y1="60" x2="120" y2="78" stroke="#1C1C1E" stroke-width="2"/>
+
+  <!-- door line -->
+  <line x1="118" y1="80" x2="118" y2="110" stroke="#1C1C1E" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- engine bay (under popped hood) -->
+  <rect x="32" y="82" width="38" height="24" rx="3" fill="#1C1C1E"/>
+  <rect x="38" y="86" width="10" height="16" rx="1.5" fill="#48484A"/>
+  <rect x="52" y="86" width="14" height="16" rx="1.5" fill="#48484A"/>
+  <circle cx="43" cy="90" r="1.5" fill="#FF9F0A"/>
+
+  <!-- popped hood (rotated up) -->
+  <g transform="translate(58 78) rotate(-58) translate(-58 -78)">
+    <path d="M30 78 L30 70 Q30 62 40 62 L78 62 Q86 70 88 78 Z"
+      fill="url(#hood-grad)" stroke="#1C1C1E" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+
+  <!-- wheels -->
+  <circle cx="62" cy="118" r="16" fill="#1C1C1E"/>
+  <circle cx="62" cy="118" r="7" fill="#8E8E93"/>
+  <circle cx="184" cy="118" r="16" fill="#1C1C1E"/>
+  <circle cx="184" cy="118" r="7" fill="#8E8E93"/>
+
+  <!-- spark above engine -->
+  <g transform="translate(46 50)">
+    <path d="M0 -8 L2 -2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2 -2 Z" fill="#FF9F0A"/>
+  </g>
+</svg>

@@ -111,8 +111,8 @@ router.post('/updates/apply', async (req, res) => {
 
   try {
     // Try using the skills CLI if available
-    const { execSync } = require('child_process');
-    execSync(`npx -y @anthropic-ai/claude-code skills update ${skill}`, {
+    const { execFileSync } = require('child_process');
+    execFileSync('npx', ['-y', '@anthropic-ai/claude-code', 'skills', 'update', skill], {
       timeout: 30000,
       stdio: 'pipe',
     });

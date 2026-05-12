@@ -19,8 +19,51 @@ const Dashboard = {
       this.skills = dashData.skills;
       this.analytics = analyticsData.skills;
       this.render();
+      this.checkUpdatesInBackground();
     } catch (err) {
       this.container.innerHTML = `<p style="color: var(--red); padding: 48px;">Failed to load dashboard: ${err.message}</p>`;
+    }
+  },
+
+  checkUpdatesInBackground() {
+    const updatable = this.skills.filter(s => s.scope === 'installed' && s.sourceUrl && s.skillFolderHash);
+    updatable.forEach(skill => {
+      API.checkUpdate(skill.name)
+        .then(result => {
+          if (result.updateAvailable) this.markCardUpdatable(skill.name);
+        })
+        .catch(() => {});
+    });
+  },
+
+  markCardUpdatable(skillName) {
+    const card = this.container.querySelector(`.skill-card[data-skill="${skillName}"]`);
+    if (!card) return;
+
+    const badges = card.querySelector('.card-badges');
+    if (badges && !badges.querySelector('.badge-update')) {
+      badges.insertAdjacentHTML('beforeend', '<span class="badge badge-update">update available</span>');
+    }
+
+    const footer = card.querySelector('.card-footer');
+    if (footer && !footer.querySelector('.card-update-btn')) {
+      const btn = document.createElement('button');
+      btn.className = 'card-update-btn btn-sm btn-primary-sm';
+      btn.textContent = 'Update';
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        btn.textContent = 'Updating…';
+        btn.disabled = true;
+        try {
+          await API.applyUpdate(skillName);
+          await this.load();
+        } catch (err) {
+          btn.textContent = 'Failed';
+          btn.disabled = false;
+          console.error('Update failed:', err);
+        }
+      });
+      footer.insertBefore(btn, footer.querySelector('.card-view-btn'));
     }
   },
 

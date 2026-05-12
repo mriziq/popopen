@@ -49,8 +49,8 @@ app.get('/api/events', (req, res) => {
 // Start
 function start() {
   startWatcher();
-  app.listen(PORT, () => {
-    console.log(`skill-journal running at http://localhost:${PORT}`);
+  app.listen(PORT, '127.0.0.1', () => {
+    console.log(`Popopen running at http://localhost:${PORT}`);
   });
 }
 

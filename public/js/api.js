@@ -1,23 +1,44 @@
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
+
+async function fetchJson(url, options) {
+  const res = await fetch(url, options);
+  return res.json();
+}
+
+async function fetchJsonOrThrow(url, options, errorMessage) {
+  const res = await fetch(url, options);
+  if (!res.ok) throw new Error(errorMessage);
+  return res.json();
+}
+
+function postJson(url, body) {
+  return { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(body) };
+}
+
+function putJson(url, body) {
+  return { method: 'PUT', headers: JSON_HEADERS, body: JSON.stringify(body) };
+}
+
+function patchJson(body) {
+  return { method: 'PATCH', headers: JSON_HEADERS, body: JSON.stringify(body) };
+}
+
 const API = {
   async getSkills() {
-    const res = await fetch('/api/skills');
-    const data = await res.json();
+    const data = await fetchJson('/api/skills');
     return data.skills;
   },
 
-  async getFile(path) {
-    const res = await fetch(`/api/files?path=${encodeURIComponent(path)}`);
-    if (!res.ok) throw new Error(`Failed to load ${path}`);
-    return res.json();
+  getFile(path) {
+    return fetchJsonOrThrow(`/api/files?path=${encodeURIComponent(path)}`, undefined, `Failed to load ${path}`);
   },
 
-  async saveFile(path, content) {
-    const res = await fetch(`/api/files?path=${encodeURIComponent(path)}`, {
-      method: 'PUT',
-      body: content,
-    });
-    if (!res.ok) throw new Error('Failed to save');
-    return res.json();
+  saveFile(path, content) {
+    return fetchJsonOrThrow(
+      `/api/files?path=${encodeURIComponent(path)}`,
+      { method: 'PUT', body: content },
+      'Failed to save'
+    );
   },
 
   connectEvents(onMessage) {
@@ -30,139 +51,103 @@ const API = {
     return es;
   },
 
-  // Analytics
   async trackEvent(skill, event, file) {
     try {
-      await fetch('/api/analytics/event', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skill, event, file }),
-      });
+      await fetch('/api/analytics/event', postJson(null, { skill, event, file }));
     } catch {}
   },
 
-  async getAnalytics() {
-    const res = await fetch('/api/analytics');
-    return res.json();
+  getAnalytics() {
+    return fetchJson('/api/analytics');
   },
 
-  // Search
-  async search(query) {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-    return res.json();
+  search(query) {
+    return fetchJson(`/api/search?q=${encodeURIComponent(query)}`);
   },
 
-  // Dashboard
-  async getDashboard() {
-    const res = await fetch('/api/dashboard');
-    return res.json();
+  getDashboard() {
+    return fetchJson('/api/dashboard');
   },
 
-  // Frontmatter
-  async getFrontmatter(skill) {
-    const res = await fetch(`/api/frontmatter?skill=${encodeURIComponent(skill)}`);
-    if (!res.ok) throw new Error('Failed to load frontmatter');
-    return res.json();
+  getFrontmatter(skill) {
+    return fetchJsonOrThrow(`/api/frontmatter?skill=${encodeURIComponent(skill)}`, undefined, 'Failed to load frontmatter');
   },
 
-  async saveFrontmatter(skill, data) {
-    const res = await fetch(`/api/frontmatter?skill=${encodeURIComponent(skill)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('Failed to save frontmatter');
-    return res.json();
+  saveFrontmatter(skill, data) {
+    return fetchJsonOrThrow(
+      `/api/frontmatter?skill=${encodeURIComponent(skill)}`,
+      putJson(null, data),
+      'Failed to save frontmatter'
+    );
   },
 
-  async patchFrontmatter(skill, fields) {
-    const res = await fetch(`/api/frontmatter?skill=${encodeURIComponent(skill)}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ frontmatter: fields }),
-    });
-    if (!res.ok) throw new Error('Failed to patch frontmatter');
-    return res.json();
+  patchFrontmatter(skill, fields) {
+    return fetchJsonOrThrow(
+      `/api/frontmatter?skill=${encodeURIComponent(skill)}`,
+      patchJson({ frontmatter: fields }),
+      'Failed to patch frontmatter'
+    );
   },
 
-  // Settings
-  async getPermissions() {
-    const res = await fetch('/api/settings/permissions');
-    return res.json();
+  getPermissions() {
+    return fetchJson('/api/settings/permissions');
   },
 
-  async getPlugins() {
-    const res = await fetch('/api/settings/plugins');
-    return res.json();
+  getPlugins() {
+    return fetchJson('/api/settings/plugins');
   },
 
-  // History
-  async getHistory(skill) {
-    const res = await fetch(`/api/history?skill=${encodeURIComponent(skill)}`);
-    return res.json();
+  getHistory(skill) {
+    return fetchJson(`/api/history?skill=${encodeURIComponent(skill)}`);
   },
 
-  async initGit(skill) {
-    const res = await fetch(`/api/history/init?skill=${encodeURIComponent(skill)}`, {
-      method: 'POST',
-    });
-    return res.json();
+  initGit(skill) {
+    return fetchJson(`/api/history/init?skill=${encodeURIComponent(skill)}`, { method: 'POST' });
   },
 
-  async getEditLog(skill) {
-    const res = await fetch(`/api/history/edits?skill=${encodeURIComponent(skill)}`);
-    return res.json();
+  getEditLog(skill) {
+    return fetchJson(`/api/history/edits?skill=${encodeURIComponent(skill)}`);
   },
 
-  // Updates
-  async checkUpdate(skill) {
-    const res = await fetch(`/api/updates/check?skill=${encodeURIComponent(skill)}`);
-    return res.json();
+  checkUpdate(skill) {
+    return fetchJson(`/api/updates/check?skill=${encodeURIComponent(skill)}`);
   },
 
-  async applyUpdate(skill) {
-    const res = await fetch(`/api/updates/apply?skill=${encodeURIComponent(skill)}`, {
-      method: 'POST',
-    });
-    return res.json();
+  applyUpdate(skill) {
+    return fetchJson(`/api/updates/apply?skill=${encodeURIComponent(skill)}`, { method: 'POST' });
   },
 
-  // Bulk
-  async bulkToggle(skills, field, value) {
-    const res = await fetch('/api/bulk/toggle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ skills, field, value }),
-    });
-    return res.json();
+  bulkToggle(skills, field, value) {
+    return fetchJson('/api/bulk/toggle', postJson(null, { skills, field, value }));
   },
 
   async bulkExport(skills) {
-    const res = await fetch('/api/bulk/export', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ skills }),
-    });
+    const res = await fetch('/api/bulk/export', postJson(null, { skills }));
     return res.blob();
   },
 
-  async bulkCompareTools(skills) {
-    const res = await fetch(`/api/bulk/compare-tools?skills=${encodeURIComponent(skills.join(','))}`);
-    return res.json();
+  bulkCompareTools(skills) {
+    return fetchJson(`/api/bulk/compare-tools?skills=${encodeURIComponent(skills.join(','))}`);
   },
 
-  // Uninstall
-  async uninstallPreview(skill) {
-    const res = await fetch(`/api/uninstall/preview?skill=${encodeURIComponent(skill)}`);
-    return res.json();
+  async renameSkill(oldName, newName) {
+    const res = await fetch('/api/skills/rename', postJson(null, { oldName, newName }));
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error(`Server error (${res.status}) — try restarting the server`);
+    }
+    if (!res.ok) throw new Error(data.error || 'Rename failed');
+    return data;
+  },
+
+  uninstallPreview(skill) {
+    return fetchJson(`/api/uninstall/preview?skill=${encodeURIComponent(skill)}`);
   },
 
   async uninstallSkill(skill) {
-    const res = await fetch('/api/uninstall', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ skill }),
-    });
+    const res = await fetch('/api/uninstall', postJson(null, { skill }));
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.error || 'Uninstall failed');

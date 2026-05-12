@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3377;
-const PID_FILE = '/tmp/skill-journal.pid';
+const PID_FILE = '/tmp/popopen.pid';
 
 // Check if already running
 if (fs.existsSync(PID_FILE)) {
@@ -13,7 +13,7 @@ if (fs.existsSync(PID_FILE)) {
   try {
     process.kill(pid, 0); // Check if process exists
     // Already running, just open the browser
-    console.log(`skill-journal already running (PID ${pid}), opening browser...`);
+    console.log(`Popopen already running (PID ${pid}), opening browser...`);
     execSync(`open http://localhost:${PORT}`);
     process.exit(0);
   } catch {

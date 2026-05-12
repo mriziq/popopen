@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 96" width="360" height="96" role="img" aria-label="Popopen window pop horizontal dark">
+  <defs>
+    <linearGradient id="wph-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0A84FF"/>
+      <stop offset="100%" stop-color="#5E5CE6"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="360" height="96" rx="16" fill="#1C1C1E"/>
+
+  <!-- icon -->
+  <g transform="translate(12 6) scale(0.7)">
+    <rect x="14" y="32" width="92" height="74" rx="14" fill="#2C2C2E"/>
+    <path d="M14 46 a14 14 0 0 1 14 -14 h64 a14 14 0 0 1 14 14 v0 h-92z" fill="url(#wph-grad)"/>
+    <circle cx="26" cy="39" r="3" fill="#FFFFFF" opacity="0.9"/>
+    <circle cx="36" cy="39" r="3" fill="#FFFFFF" opacity="0.55"/>
+    <circle cx="46" cy="39" r="3" fill="#FFFFFF" opacity="0.55"/>
+    <path d="M48 80 L60 64 L72 80" fill="none" stroke="url(#wph-grad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M48 96 L60 80 L72 96" fill="none" stroke="url(#wph-grad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+  </g>
+
+  <text x="106" y="62" font-family="-apple-system, SF Pro Display, Inter, Helvetica, Arial, sans-serif" font-size="40" font-weight="700" fill="#F2F2F7" letter-spacing="-1.5">popopen</text>
+</svg>

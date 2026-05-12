@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const STORE_DIR = path.join(os.homedir(), '.skill-journal');
+const STORE_DIR = path.join(os.homedir(), '.popopen');
 const STORE_FILE = path.join(STORE_DIR, 'analytics.json');
 const MAX_EVENTS = 10000;
 const ROTATE_TO = 5000;
@@ -70,7 +70,7 @@ function getRecentActivity(limit = 50) {
 function getEditLog(skillName) {
   const store = readStore();
   return store.events
-    .filter(e => e.skill === skillName && (e.event === 'edit' || e.event === 'save'))
+    .filter(e => e.skill === skillName)
     .reverse();
 }
 

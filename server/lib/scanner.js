@@ -4,10 +4,28 @@ const os = require('os');
 const matter = require('gray-matter');
 const { readLockFile } = require('./lock-reader');
 
-const SKILLS_DIR = path.join(os.homedir(), '.claude', 'skills');
+const SKILLS_DIR = process.env.SKILLS_DIR || path.join(os.homedir(), '.claude', 'skills');
+const LOCAL_SKILLS_DIR = process.env.LOCAL_SKILLS_DIR || path.join(process.cwd(), '.claude', 'skills');
+const AGENTS_SKILLS_DIR = path.join(os.homedir(), '.agents', 'skills');
+const LOCK_FILE_PATH = path.join(os.homedir(), '.agents', '.skill-lock.json');
+
+const VALID_SKILL_NAME_REGEX = /^[\w-]+$/;
+const IGNORED_DIRS = new Set(['node_modules']);
 
 function getSkillsDir() {
   return SKILLS_DIR;
+}
+
+function isHidden(name) {
+  return name.startsWith('.');
+}
+
+function safeRealpath(p) {
+  try {
+    return fs.realpathSync(p);
+  } catch {
+    return null;
+  }
 }
 
 function listFilesRecursive(dir, base = '') {
@@ -18,8 +36,9 @@ function listFilesRecursive(dir, base = '') {
   } catch {
     return results;
   }
+
   for (const entry of entries) {
-    if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+    if (isHidden(entry.name) || IGNORED_DIRS.has(entry.name)) continue;
     const rel = base ? path.join(base, entry.name) : entry.name;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
@@ -42,190 +61,194 @@ function parseFrontmatter(filePath) {
   }
 }
 
-function scanSkills() {
-  if (!fs.existsSync(SKILLS_DIR)) {
-    return [];
-  }
+function buildSkillRecord(entry, realPath, isSymlink, location, lockData) {
+  const files = listFilesRecursive(realPath);
+  const parsed = parseFrontmatter(path.join(realPath, 'SKILL.md'));
+  const fileList = files.filter(f => f.type === 'file').map(f => f.name);
+  const lock = (lockData || {})[entry.name] || {};
 
-  const lockData = readLockFile();
+  return {
+    name: entry.name,
+    description: parsed?.frontmatter?.description || '',
+    scope: isSymlink ? 'installed' : 'custom',
+    location,
+    isSymlink,
+    isLocal: !isSymlink,
+    realPath,
+    files: fileList,
+    dirs: files.filter(f => f.type === 'dir').map(f => f.name),
+    fileCount: fileList.length,
+    hasGit: fs.existsSync(path.join(realPath, '.git')),
+    frontmatter: parsed?.frontmatter || null,
+    source: lock.source || null,
+    sourceType: lock.sourceType || null,
+    sourceUrl: lock.sourceUrl || null,
+    skillPath: lock.skillPath || null,
+    skillFolderHash: lock.skillFolderHash || null,
+    pluginName: lock.pluginName || null,
+    installedAt: lock.installedAt || null,
+    updatedAt: lock.updatedAt || null,
+  };
+}
+
+function scanDir(dir, location, lockData) {
+  if (!fs.existsSync(dir)) return [];
   let entries;
   try {
-    entries = fs.readdirSync(SKILLS_DIR, { withFileTypes: true });
+    entries = fs.readdirSync(dir, { withFileTypes: true });
   } catch {
     return [];
   }
 
   const skills = [];
-
   for (const entry of entries) {
-    if (entry.name.startsWith('.')) continue;
+    if (isHidden(entry.name)) continue;
 
-    const fullPath = path.join(SKILLS_DIR, entry.name);
+    const fullPath = path.join(dir, entry.name);
     let stat;
-    try {
-      stat = fs.lstatSync(fullPath);
-    } catch {
-      continue;
-    }
+    try { stat = fs.lstatSync(fullPath); } catch { continue; }
 
-    const isSymlink = stat.isSymbolicLink();
-    let realPath;
-    try {
-      realPath = fs.realpathSync(fullPath);
-    } catch {
-      continue;
-    }
+    const realPath = safeRealpath(fullPath);
+    if (!realPath) continue;
 
     let realStat;
-    try {
-      realStat = fs.statSync(realPath);
-    } catch {
-      continue;
-    }
-
+    try { realStat = fs.statSync(realPath); } catch { continue; }
     if (!realStat.isDirectory()) continue;
 
-    const files = listFilesRecursive(realPath);
-    const skillMdPath = path.join(realPath, 'SKILL.md');
-    const parsed = parseFrontmatter(skillMdPath);
-
-    const fileList = files.filter(f => f.type === 'file').map(f => f.name);
-    const hasGit = fs.existsSync(path.join(realPath, '.git'));
-    const lock = lockData[entry.name] || {};
-
-    // Determine scope:
-    // "installed" = symlinked from ~/.agents/skills/, tracked in lock file, installed from remote
-    // "custom" = local directory in ~/.claude/skills/, user-created or manually added
-    const scope = isSymlink ? 'installed' : 'custom';
-
-    const skill = {
-      name: entry.name,
-      description: parsed?.frontmatter?.description || '',
-      scope,
-      isSymlink,
-      isLocal: !isSymlink,
-      realPath,
-      files: fileList,
-      dirs: files.filter(f => f.type === 'dir').map(f => f.name),
-      fileCount: fileList.length,
-      hasGit,
-      frontmatter: parsed?.frontmatter || null,
-      source: lock.source || null,
-      sourceType: lock.sourceType || null,
-      sourceUrl: lock.sourceUrl || null,
-      skillPath: lock.skillPath || null,
-      skillFolderHash: lock.skillFolderHash || null,
-      pluginName: lock.pluginName || null,
-      installedAt: lock.installedAt || null,
-      updatedAt: lock.updatedAt || null,
-    };
-
-    skills.push(skill);
+    skills.push(buildSkillRecord(entry, realPath, stat.isSymbolicLink(), location, lockData));
   }
+  return skills;
+}
 
+function scanSkills() {
+  const lockData = readLockFile();
+  const global = scanDir(SKILLS_DIR, 'global', lockData);
+  const local = scanDir(LOCAL_SKILLS_DIR, 'local', null);
+
+  // Local skills shadow global skills of the same name
+  const localNames = new Set(local.map(s => s.name));
+  const skills = [...local, ...global.filter(s => !localNames.has(s.name))];
   skills.sort((a, b) => a.name.localeCompare(b.name));
   return skills;
 }
 
+function isPathInside(child, parent) {
+  return child.startsWith(parent + path.sep);
+}
+
 function resolveSkillFilePath(skillPath) {
-  // skillPath is like "linear-cli/SKILL.md"
-  const full = path.join(SKILLS_DIR, skillPath);
-  const real = fs.realpathSync(full);
+  const realLocalDir = fs.existsSync(LOCAL_SKILLS_DIR) ? fs.realpathSync(LOCAL_SKILLS_DIR) : LOCAL_SKILLS_DIR;
+  const realSkillsDir = fs.existsSync(SKILLS_DIR) ? fs.realpathSync(SKILLS_DIR) : SKILLS_DIR;
 
-  // Security: ensure resolved path is within skills dir or its symlink targets
-  const realSkillsDir = fs.realpathSync(SKILLS_DIR);
-  const agentsDir = path.join(os.homedir(), '.agents', 'skills');
-
-  if (!real.startsWith(realSkillsDir) && !real.startsWith(agentsDir) && !real.startsWith(SKILLS_DIR)) {
-    throw new Error('Path traversal detected');
+  // Prefer local skills dir if the skill exists there
+  const localFull = path.join(LOCAL_SKILLS_DIR, skillPath);
+  if (fs.existsSync(localFull)) {
+    const real = fs.realpathSync(localFull);
+    if (isPathInside(real, realLocalDir)) return real;
   }
 
+  const real = fs.realpathSync(path.join(SKILLS_DIR, skillPath));
+  const allowed =
+    isPathInside(real, realSkillsDir) ||
+    isPathInside(real, AGENTS_SKILLS_DIR) ||
+    isPathInside(real, SKILLS_DIR);
+
+  if (!allowed) throw new Error('Path traversal detected');
   return real;
 }
 
-function readSkillFile(skillPath) {
-  const real = resolveSkillFilePath(skillPath);
-  const raw = fs.readFileSync(real, 'utf-8');
+function readFileWithFrontmatter(filePath) {
+  const raw = fs.readFileSync(filePath, 'utf-8');
   const { data, content } = matter(raw);
   return { frontmatter: data, body: content, raw };
+}
+
+function readSkillFile(skillPath) {
+  return readFileWithFrontmatter(resolveSkillFilePath(skillPath));
 }
 
 function writeSkillFile(skillPath, content) {
-  const real = resolveSkillFilePath(skillPath);
-  fs.writeFileSync(real, content, 'utf-8');
+  fs.writeFileSync(resolveSkillFilePath(skillPath), content, 'utf-8');
 }
 
 function readSkillFrontmatter(skillName) {
-  const skillMdPath = path.join(SKILLS_DIR, skillName, 'SKILL.md');
-  const real = fs.realpathSync(skillMdPath);
-  const raw = fs.readFileSync(real, 'utf-8');
-  const { data, content } = matter(raw);
-  return { frontmatter: data, body: content, raw };
+  return readFileWithFrontmatter(resolveSkillFilePath(path.join(skillName, 'SKILL.md')));
 }
 
 function writeSkillFrontmatter(skillName, frontmatter, body) {
-  const skillMdPath = path.join(SKILLS_DIR, skillName, 'SKILL.md');
-  const real = fs.realpathSync(skillMdPath);
-  const output = matter.stringify(body, frontmatter);
-  fs.writeFileSync(real, output, 'utf-8');
+  const real = resolveSkillFilePath(path.join(skillName, 'SKILL.md'));
+  fs.writeFileSync(real, matter.stringify(body, frontmatter), 'utf-8');
 }
 
 function patchSkillFrontmatter(skillName, patch) {
   const { frontmatter, body } = readSkillFrontmatter(skillName);
   const merged = { ...frontmatter, ...patch };
-  // Remove keys set to null/undefined
-  for (const [k, v] of Object.entries(merged)) {
-    if (v === null || v === undefined) delete merged[k];
+
+  // Strip null/undefined keys
+  for (const [key, value] of Object.entries(merged)) {
+    if (value === null || value === undefined) delete merged[key];
   }
-  // Remove disable-model-invocation if set to false (it's the default)
-  if (merged['disable-model-invocation'] === false) delete merged['disable-model-invocation'];
+
+  // disable-model-invocation=false is the default; omit it
+  if (merged['disable-model-invocation'] === false) {
+    delete merged['disable-model-invocation'];
+  }
+
   writeSkillFrontmatter(skillName, merged, body);
 }
 
 function resolveSkillDir(skillName) {
-  const full = path.join(SKILLS_DIR, skillName);
-  return fs.realpathSync(full);
+  const real = fs.realpathSync(path.join(SKILLS_DIR, skillName));
+  const realSkillsDir = fs.realpathSync(SKILLS_DIR);
+  if (!isPathInside(real, realSkillsDir) && !isPathInside(real, AGENTS_SKILLS_DIR)) {
+    throw new Error('Path traversal detected');
+  }
+  return real;
+}
+
+function removeFromLockFile(skillName) {
+  try {
+    const lockData = JSON.parse(fs.readFileSync(LOCK_FILE_PATH, 'utf-8'));
+    if (lockData.skills && lockData.skills[skillName]) {
+      delete lockData.skills[skillName];
+      fs.writeFileSync(LOCK_FILE_PATH, JSON.stringify(lockData, null, 2), 'utf-8');
+    }
+  } catch {
+    // Best-effort cleanup
+  }
+}
+
+function uninstallInstalledSkill(skillName, fullPath) {
+  fs.unlinkSync(fullPath);
+
+  const agentsPath = path.join(AGENTS_SKILLS_DIR, skillName);
+  if (fs.existsSync(agentsPath)) {
+    fs.rmSync(agentsPath, { recursive: true, force: true });
+  }
+
+  removeFromLockFile(skillName);
+  return { scope: 'installed', removed: true };
+}
+
+function uninstallCustomSkill(fullPath) {
+  fs.rmSync(fullPath, { recursive: true, force: true });
+  return { scope: 'custom', removed: true };
 }
 
 function uninstallSkill(skillName) {
-  const fullPath = path.join(SKILLS_DIR, skillName);
+  if (!VALID_SKILL_NAME_REGEX.test(skillName)) {
+    throw new Error('Invalid skill name');
+  }
 
+  const fullPath = path.join(SKILLS_DIR, skillName);
   if (!fs.existsSync(fullPath)) {
     throw new Error(`Skill "${skillName}" not found`);
   }
 
-  const stat = fs.lstatSync(fullPath);
-  const isSymlink = stat.isSymbolicLink();
-
-  if (isSymlink) {
-    // Installed (global) skill: remove the symlink
-    fs.unlinkSync(fullPath);
-
-    // Also remove from ~/.agents/skills/ if it exists there
-    const agentsPath = path.join(os.homedir(), '.agents', 'skills', skillName);
-    if (fs.existsSync(agentsPath)) {
-      fs.rmSync(agentsPath, { recursive: true, force: true });
-    }
-
-    // Remove from lock file
-    const lockFilePath = path.join(os.homedir(), '.agents', '.skill-lock.json');
-    try {
-      const lockRaw = fs.readFileSync(lockFilePath, 'utf-8');
-      const lockData = JSON.parse(lockRaw);
-      if (lockData.skills && lockData.skills[skillName]) {
-        delete lockData.skills[skillName];
-        fs.writeFileSync(lockFilePath, JSON.stringify(lockData, null, 2), 'utf-8');
-      }
-    } catch {
-      // Lock file cleanup is best-effort
-    }
-
-    return { scope: 'installed', removed: true };
-  } else {
-    // Custom (local) skill: delete the directory
-    fs.rmSync(fullPath, { recursive: true, force: true });
-    return { scope: 'custom', removed: true };
-  }
+  const isSymlink = fs.lstatSync(fullPath).isSymbolicLink();
+  return isSymlink
+    ? uninstallInstalledSkill(skillName, fullPath)
+    : uninstallCustomSkill(fullPath);
 }
 
 module.exports = {

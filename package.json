@@ -1,11 +1,18 @@
 {
-  "name": "skill-journal",
+  "name": "popopen",
   "version": "1.0.0",
   "description": "Visual UI for browsing and editing Claude Code skills",
   "main": "server/index.js",
   "bin": {
-    "journal": "./bin/journal.js"
+    "popopen": "./bin/popopen.js"
   },
+  "files": [
+    "bin",
+    "server",
+    "public",
+    "!public/archive",
+    "!public/logo-white-bg.png"
+  ],
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js --dev"
@@ -15,9 +22,17 @@
     "skills",
     "markdown"
   ],
-  "author": "",
+  "author": "mriziq",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mriziq/popopen.git"
+  },
+  "homepage": "https://github.com/mriziq/popopen#readme",
   "dependencies": {
     "archiver": "^7.0.1",
     "chokidar": "^5.0.0",

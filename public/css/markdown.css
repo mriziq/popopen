@@ -1,11 +1,15 @@
 /* ============================================
-   Markdown rendering — Neural Surgery theme
+   Markdown rendering — Apple design language
    ============================================ */
 
 #viewer .md-content {
   line-height: 1.75;
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text);
+  font-family: var(--font-body);
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
 }
 
 #viewer .md-content h1,
@@ -16,28 +20,29 @@
 #viewer .md-content h6 {
   font-family: var(--font-display);
   color: var(--text-bright);
-  margin-top: 1.6em;
+  margin-top: 1.8em;
   margin-bottom: 0.5em;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.3;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
 }
 
 #viewer .md-content h1 {
-  font-size: 1.6em;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.3em;
-  color: var(--copper);
+  font-size: 1.65em;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.4em;
+  margin-top: 0;
 }
 
 #viewer .md-content h2 {
   font-size: 1.3em;
   border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 0.25em;
+  padding-bottom: 0.3em;
 }
 
-#viewer .md-content h3 { font-size: 1.1em; }
-#viewer .md-content h4 { font-size: 1em; color: var(--copper-dim); }
+#viewer .md-content h3 { font-size: 1.1em; font-weight: 600; }
+#viewer .md-content h4 { font-size: 1em;   font-weight: 600; color: var(--text-muted); }
 
 #viewer .md-content p {
   margin-bottom: 1em;
@@ -46,58 +51,49 @@
 #viewer .md-content a {
   color: var(--copper);
   text-decoration: none;
-  border-bottom: 1px solid var(--copper-dim);
-  transition: all 0.15s;
+  border-bottom: 1px solid rgba(10, 132, 255, 0.35);
+  transition: border-color 0.15s, opacity 0.15s;
 }
 
 #viewer .md-content a:hover {
-  color: var(--copper-bright);
-  border-bottom-color: var(--copper-bright);
+  opacity: 0.8;
+  border-bottom-color: var(--copper);
 }
 
 #viewer .md-content code {
   font-family: var(--font-mono);
-  font-size: 0.88em;
+  font-size: 0.875em;
   padding: 2px 6px;
-  border-radius: 3px;
-  background: var(--surface-raised);
+  border-radius: 4px;
+  background: var(--surface);
   border: 1px solid var(--border);
-  color: var(--cyan-dim);
+  color: var(--text-muted);
 }
 
 #viewer .md-content pre {
   margin: 1.2em 0;
-  padding: 16px;
-  border-radius: 6px;
+  padding: 16px 18px;
+  border-radius: 10px;
   overflow-x: auto;
   background: var(--surface) !important;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-subtle);
   position: relative;
 }
 
-#viewer .md-content pre::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, var(--copper-dim), transparent 60%);
-  opacity: 0.5;
-}
+#viewer .md-content pre::before { display: none; }
 
 #viewer .md-content pre code {
   padding: 0;
   background: transparent;
   border: none;
   color: var(--text);
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 12.5px;
+  line-height: 1.65;
 }
 
 #viewer .md-content ul,
 #viewer .md-content ol {
-  padding-left: 1.5em;
+  padding-left: 1.6em;
   margin-bottom: 1em;
 }
 
@@ -106,7 +102,7 @@
 }
 
 #viewer .md-content li::marker {
-  color: var(--copper-dim);
+  color: var(--text-dim);
 }
 
 #viewer .md-content li > ul,
@@ -115,47 +111,50 @@
 }
 
 #viewer .md-content blockquote {
-  border-left: 2px solid var(--copper-dim);
+  border-left: 3px solid var(--border);
   padding: 0.5em 1em;
   margin: 1em 0;
   color: var(--text-muted);
-  background: var(--surface);
-  border-radius: 0 4px 4px 0;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0 6px 6px 0;
 }
 
 #viewer .md-content table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1em 0;
+  margin: 1.2em 0;
+  font-size: 13px;
 }
 
 #viewer .md-content th,
 #viewer .md-content td {
-  border: 1px solid var(--border);
-  padding: 8px 12px;
+  border: 1px solid var(--border-subtle);
+  padding: 9px 14px;
   text-align: left;
-  font-size: 12px;
 }
 
 #viewer .md-content th {
   background: var(--surface);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 11px;
-  color: var(--copper-dim);
-  letter-spacing: 0.03em;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0;
+}
+
+#viewer .md-content tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 #viewer .md-content hr {
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-subtle);
   margin: 2em 0;
 }
 
 #viewer .md-content img {
   max-width: 100%;
-  border-radius: 6px;
-  border: 1px solid var(--border);
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
 }
 
 #viewer .md-content strong {

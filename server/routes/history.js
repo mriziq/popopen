@@ -63,7 +63,7 @@ router.post('/history/init', async (req, res) => {
     const git = simpleGit(realPath);
     await git.init();
     await git.add('.');
-    await git.commit('Initial commit (skill-journal)');
+    await git.commit('Initial commit (popopen)');
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
