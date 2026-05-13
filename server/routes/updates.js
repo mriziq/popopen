@@ -1,5 +1,7 @@
 const express = require('express');
+const { execFile } = require('child_process');
 const { scanSkills } = require('../lib/scanner');
+const updateState = require('../lib/update-state');
 
 const router = express.Router();
 
@@ -105,23 +107,41 @@ router.get('/updates/check', async (req, res) => {
   }
 });
 
-router.post('/updates/apply', async (req, res) => {
+router.post('/updates/apply', (req, res) => {
   const skill = req.query.skill;
   if (!skill) return res.status(400).json({ error: 'skill query parameter required' });
 
-  try {
-    // Try using the skills CLI if available
-    const { execFileSync } = require('child_process');
-    execFileSync('npx', ['-y', '@anthropic-ai/claude-code', 'skills', 'update', skill], {
-      timeout: 30000,
-      stdio: 'pipe',
-    });
-    // Clear cache
-    updateCache.delete(skill);
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: `Update failed: ${err.message}` });
+  const existing = updateState.get(skill);
+  if (existing && existing.status === 'in-progress') {
+    return res.status(409).json({ error: 'Update already in progress', state: existing });
   }
+
+  updateState.start(skill);
+  res.status(202).json({ ok: true, started: true });
+
+  execFile('npx', ['-y', '@anthropic-ai/claude-code', 'skills', 'update', skill], {
+    timeout: 5 * 60 * 1000,
+  }, (err) => {
+    if (err) {
+      updateState.fail(skill, err.message || err);
+    } else {
+      updateState.succeed(skill);
+      updateCache.delete(skill);
+    }
+  });
+});
+
+router.get('/updates/status', (req, res) => {
+  const skill = req.query.skill;
+  if (skill) return res.json({ state: updateState.get(skill) });
+  res.json({ states: updateState.getAll() });
+});
+
+router.delete('/updates/status', (req, res) => {
+  const skill = req.query.skill;
+  if (!skill) return res.status(400).json({ error: 'skill query parameter required' });
+  updateState.clear(skill);
+  res.json({ ok: true });
 });
 
 module.exports = router;

@@ -97,24 +97,21 @@ const API = {
     return fetchJson('/api/settings/plugins');
   },
 
-  getHistory(skill) {
-    return fetchJson(`/api/history?skill=${encodeURIComponent(skill)}`);
-  },
-
-  initGit(skill) {
-    return fetchJson(`/api/history/init?skill=${encodeURIComponent(skill)}`, { method: 'POST' });
-  },
-
-  getEditLog(skill) {
-    return fetchJson(`/api/history/edits?skill=${encodeURIComponent(skill)}`);
-  },
-
   checkUpdate(skill) {
     return fetchJson(`/api/updates/check?skill=${encodeURIComponent(skill)}`);
   },
 
   applyUpdate(skill) {
     return fetchJson(`/api/updates/apply?skill=${encodeURIComponent(skill)}`, { method: 'POST' });
+  },
+
+  getUpdateStatus(skill) {
+    const qs = skill ? `?skill=${encodeURIComponent(skill)}` : '';
+    return fetchJson(`/api/updates/status${qs}`);
+  },
+
+  dismissUpdateStatus(skill) {
+    return fetchJson(`/api/updates/status?skill=${encodeURIComponent(skill)}`, { method: 'DELETE' });
   },
 
   bulkToggle(skills, field, value) {

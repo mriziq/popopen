@@ -1,5 +1,5 @@
 const express = require('express');
-const { recordEvent, getStats, getRecentActivity } = require('../lib/analytics-store');
+const { recordEvent, getStats } = require('../lib/analytics-store');
 
 const router = express.Router();
 
@@ -14,8 +14,7 @@ router.post('/analytics/event', express.json(), (req, res) => {
 
 router.get('/analytics', (req, res) => {
   const skills = getStats();
-  const recentActivity = getRecentActivity(50);
-  res.json({ skills, recentActivity });
+  res.json({ skills });
 });
 
 module.exports = router;

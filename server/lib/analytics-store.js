@@ -62,16 +62,4 @@ function getStats() {
   return skills;
 }
 
-function getRecentActivity(limit = 50) {
-  const store = readStore();
-  return store.events.slice(-limit).reverse();
-}
-
-function getEditLog(skillName) {
-  const store = readStore();
-  return store.events
-    .filter(e => e.skill === skillName)
-    .reverse();
-}
-
-module.exports = { recordEvent, getStats, getRecentActivity, getEditLog };
+module.exports = { recordEvent, getStats };
