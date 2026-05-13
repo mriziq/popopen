@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/mriziq/popopen/compare/v1.1.0...v1.2.0) (2026-05-13)
+
+
+### Features
+
+* add --version/-v flag to CLI ([ecea79a](https://github.com/mriziq/popopen/commit/ecea79ad2ddd1cde2032e2dbe84b6ae8ca5f6356))
+
 # [1.1.0](https://github.com/mriziq/popopen/compare/v1.0.0...v1.1.0) (2026-05-13)
 
 
