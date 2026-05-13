@@ -4,6 +4,11 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+if (process.argv.includes('--version') || process.argv.includes('-v')) {
+  console.log(require('../package.json').version);
+  process.exit(0);
+}
+
 const PORT = process.env.PORT || 3377;
 const PID_FILE = '/tmp/popopen.pid';
 
