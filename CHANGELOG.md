@@ -1,3 +1,13 @@
+# [1.3.0](https://github.com/mriziq/popopen/compare/v1.2.0...v1.3.0) (2026-05-13)
+
+
+### Features
+
+* Merge pull request [#8](https://github.com/mriziq/popopen/issues/8) from mriziq/release/next ([203d5d7](https://github.com/mriziq/popopen/commit/203d5d7e72256be586daa8abe3d4cea9fef57b67))
+* version fix 3 ([5bb00b6](https://github.com/mriziq/popopen/commit/5bb00b6754dccb4df8335b4d88de209d8808561b))
+* version flag ([bb21e40](https://github.com/mriziq/popopen/commit/bb21e407120c0c0a327b2a4dbd40915ab6826b09))
+* version flag  ([8dd9438](https://github.com/mriziq/popopen/commit/8dd943875fa7b6b66303ec669a55c2433dad9b10))
+
 # [1.2.0](https://github.com/mriziq/popopen/compare/v1.1.0...v1.2.0) (2026-05-13)
 
 
