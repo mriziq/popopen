@@ -1,3 +1,11 @@
+## [1.1.1](https://github.com/mriziq/popopen/compare/v1.1.0...v1.1.1) (2026-05-13)
+
+
+### Bug Fixes
+
+* enable npm provenance publishing to use OIDC and bypass 2FA ([a4d475c](https://github.com/mriziq/popopen/commit/a4d475c5f233ccb128048d54af4dd0b49616bff1))
+* enable npm provenance publishing to use OIDC and bypass 2FA ([9bb442f](https://github.com/mriziq/popopen/commit/9bb442f900d91dd03471cb195cab4a468adbc275))
+
 # [1.1.0](https://github.com/mriziq/popopen/compare/v1.0.0...v1.1.0) (2026-05-13)
 
 
