@@ -84,19 +84,11 @@ function buildTour(Shepherd) {
     { element: '#search-container', on: 'right' }
   );
 
-  // Step 6 — Nav buttons
-  step(
-    'nav-buttons',
-    'Dashboard & Graph',
-    'The grid icon gives you a card view of all skills. The node icon shows a map of which skills use which tools.',
-    { element: '.nav-buttons', on: 'right' }
-  );
-
-  // Step 7 — Content area
+  // Step 6 — Content area
   tour.addStep({
     id: 'content-area',
     title: 'Reading & Editing',
-    text: 'Click any skill in the sidebar to open it here. Switch between <b>Content</b>, <b>Permissions</b>, and <b>History</b> tabs. Hit <b>Edit</b> to make changes — you\'ll review a diff before anything saves.',
+    text: 'Click any skill in the sidebar to open it here. Switch between <b>Content</b> and <b>Permissions</b> tabs. Hit <b>Edit</b> to make changes — you\'ll review a diff before anything saves.',
     buttons: [
       { text: 'Back', action: back, classes: 'shep-btn-secondary' },
       { text: 'Next',  action: next, classes: 'shep-btn-primary'   },

@@ -13,7 +13,7 @@ if (fs.existsSync(PID_FILE)) {
   try {
     process.kill(pid, 0); // Check if process exists
     // Already running, just open the browser
-    console.log(`Popopen already running (PID ${pid}), opening browser...`);
+    console.log(`Popping open your agents ... http://localhost:${PORT}`);
     execSync(`open http://localhost:${PORT}`);
     process.exit(0);
   } catch {

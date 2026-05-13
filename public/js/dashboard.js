@@ -20,9 +20,73 @@ const Dashboard = {
       this.analytics = analyticsData.skills;
       this.render();
       this.checkUpdatesInBackground();
+      this.resumeOrSurfaceUpdateStates();
     } catch (err) {
       this.container.innerHTML = `<p style="color: var(--red); padding: 48px;">Failed to load dashboard: ${err.message}</p>`;
     }
+  },
+
+  async resumeOrSurfaceUpdateStates() {
+    try {
+      const { states } = await API.getUpdateStatus();
+      for (const [skill, entry] of Object.entries(states || {})) {
+        if (entry.status === 'in-progress') {
+          this.showProgressBar(skill);
+          this.pollUpdateStatus(skill);
+        } else if (entry.status === 'failed') {
+          if (typeof Toast !== 'undefined') {
+            Toast.error(`<strong>${skill}</strong> failed to update last session.<br><span style="opacity:0.7;font-size:11px">${entry.error || 'Unknown error'}</span>`, { duration: 0 });
+          }
+          await API.dismissUpdateStatus(skill);
+        }
+      }
+    } catch {}
+  },
+
+  showProgressBar(skillName) {
+    const card = this.container.querySelector(`.skill-card[data-skill="${skillName}"]`);
+    if (!card) return null;
+    const footer = card.querySelector('.card-footer');
+    if (!footer) return null;
+    let existing = footer.querySelector('.card-update-progress');
+    if (existing) return existing;
+    const updateBtn = footer.querySelector('.card-update-btn');
+    if (updateBtn) updateBtn.remove();
+    const progress = document.createElement('div');
+    progress.className = 'card-update-progress';
+    progress.innerHTML = '<div class="card-update-progress-bar"></div><span class="card-update-progress-label">Updating…</span>';
+    footer.insertBefore(progress, footer.querySelector('.card-view-btn'));
+    return progress;
+  },
+
+  removeProgressBar(skillName) {
+    const card = this.container.querySelector(`.skill-card[data-skill="${skillName}"]`);
+    const progress = card?.querySelector('.card-update-progress');
+    if (progress) progress.remove();
+  },
+
+  async pollUpdateStatus(skillName) {
+    const tick = async () => {
+      try {
+        const { state } = await API.getUpdateStatus(skillName);
+        if (!state) { this.removeProgressBar(skillName); return; }
+        if (state.status === 'in-progress') return setTimeout(tick, 1000);
+        this.removeProgressBar(skillName);
+        if (state.status === 'success') {
+          if (typeof Toast !== 'undefined') Toast.success(`<strong>${skillName}</strong> updated.`);
+          await API.dismissUpdateStatus(skillName);
+          await this.load();
+        } else {
+          if (typeof Toast !== 'undefined') {
+            Toast.error(`<strong>${skillName}</strong> update failed.<br><span style="opacity:0.7;font-size:11px">${state.error || 'Unknown error'}</span>`, { duration: 0 });
+          }
+          await API.dismissUpdateStatus(skillName);
+        }
+      } catch {
+        setTimeout(tick, 2000);
+      }
+    };
+    tick();
   },
 
   checkUpdatesInBackground() {
@@ -52,15 +116,12 @@ const Dashboard = {
       btn.textContent = 'Update';
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        btn.textContent = 'Updating…';
-        btn.disabled = true;
         try {
           await API.applyUpdate(skillName);
-          await this.load();
+          this.showProgressBar(skillName);
+          this.pollUpdateStatus(skillName);
         } catch (err) {
-          btn.textContent = 'Failed';
-          btn.disabled = false;
-          console.error('Update failed:', err);
+          if (typeof Toast !== 'undefined') Toast.error(`Failed to start update: ${err.message}`);
         }
       });
       footer.insertBefore(btn, footer.querySelector('.card-view-btn'));
@@ -183,7 +244,7 @@ const Dashboard = {
     if (typeof Bulk !== 'undefined') Bulk.renderActionBar();
   },
 
-  async showUninstallConfirm(skillName) {
+  async showUninstallConfirm(skillName, onComplete) {
     try {
       const preview = await API.uninstallPreview(skillName);
 
@@ -234,7 +295,8 @@ const Dashboard = {
         try {
           await API.uninstallSkill(skillName);
           overlay.remove();
-          await this.load();
+          if (onComplete) await onComplete();
+          else await this.load();
         } catch (err) {
           btn.textContent = 'Failed: ' + err.message;
           btn.disabled = false;

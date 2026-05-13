@@ -7,11 +7,11 @@ const searchRouter = require('./routes/search');
 const frontmatterRouter = require('./routes/frontmatter');
 const settingsRouter = require('./routes/settings');
 const dashboardRouter = require('./routes/dashboard');
-const historyRouter = require('./routes/history');
 const updatesRouter = require('./routes/updates');
 const bulkRouter = require('./routes/bulk');
 const uninstallRouter = require('./routes/uninstall');
 const { startWatcher, addClient } = require('./lib/watcher');
+const updateState = require('./lib/update-state');
 
 const app = express();
 const PORT = process.env.PORT || 3377;
@@ -30,7 +30,6 @@ app.use('/api', searchRouter);
 app.use('/api', frontmatterRouter);
 app.use('/api', settingsRouter);
 app.use('/api', dashboardRouter);
-app.use('/api', historyRouter);
 app.use('/api', updatesRouter);
 app.use('/api', bulkRouter);
 app.use('/api', uninstallRouter);
@@ -48,9 +47,10 @@ app.get('/api/events', (req, res) => {
 
 // Start
 function start() {
+  updateState.sweepStale();
   startWatcher();
   app.listen(PORT, '127.0.0.1', () => {
-    console.log(`Popopen running at http://localhost:${PORT}`);
+    console.log(`Popping open your agents ... http://localhost:${PORT}`);
   });
 }
 

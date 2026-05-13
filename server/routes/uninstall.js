@@ -1,5 +1,6 @@
 const express = require('express');
 const { uninstallSkill, scanSkills } = require('../lib/scanner');
+const updateState = require('../lib/update-state');
 
 const router = express.Router();
 
@@ -31,6 +32,7 @@ router.post('/uninstall', express.json(), (req, res) => {
 
   try {
     const result = uninstallSkill(skill);
+    updateState.clear(skill);
     res.json({ ok: true, ...result });
   } catch (err) {
     res.status(400).json({ error: err.message });

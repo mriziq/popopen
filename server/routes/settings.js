@@ -20,7 +20,8 @@ function readJsonFile(filePath) {
 router.get('/settings/permissions', (req, res) => {
   const local = readJsonFile(SETTINGS_LOCAL_FILE);
   const permissions = local.permissions?.allow || [];
-  res.json({ permissions });
+  const deny = local.permissions?.deny || [];
+  res.json({ permissions, deny });
 });
 
 router.get('/settings/plugins', (req, res) => {
