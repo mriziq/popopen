@@ -315,16 +315,6 @@
     Sidebar.applyFilters(query, filters);
   });
 
-  Search.onResultClick = (filePath, instanceId) => {
-    const skillName = getSkillName(filePath);
-    const skill = Sidebar.skills.find(s => s.id === instanceId) || Sidebar.skills.find(s => s.name === skillName);
-    if (skill) {
-      Sidebar.setActive(filePath, skill.id);
-      Sidebar.expandSkill(skillName, skill.id);
-      onFileSelect(filePath, skill);
-    }
-  };
-
   Viewer.init(viewer);
   Editor.init(editorContainer);
   initOptionalComponents();

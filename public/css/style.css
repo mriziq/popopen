@@ -496,41 +496,6 @@ body { display: flex; }
   color: #fff;
 }
 
-.search-results {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  max-height: 280px;
-  overflow-y: auto;
-  z-index: 100;
-  box-shadow: var(--shadow-popover);
-}
-
-.search-result {
-  padding: 9px 12px;
-  cursor: pointer;
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  transition: background 0.1s;
-}
-
-.search-result:hover      { background: var(--copper-glow); }
-.search-result:last-child { border-bottom: none; }
-.search-result:first-child { border-radius: 10px 10px 0 0; }
-.search-result:only-child  { border-radius: 10px; }
-
-.sr-skill   { font-weight: 600; color: var(--copper); font-size: 12px; }
-.sr-file    { color: var(--text-muted); font-size: 11px; }
-.sr-context { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
-
-
 /* ============================================
    SKILL TREE
    ============================================ */

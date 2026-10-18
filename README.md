@@ -46,7 +46,7 @@ PORT=4000 popopen   # use a different port
 - **Browse & edit skills** — scan global, project, and configured external skill folders for Claude Code, Codex, OpenCode, Hermes, and Pi; browse discovered skill files and preview Markdown with rendered headings, links, lists, tables, and code blocks
 - **See every copy** — group same-named skills while showing each separate location and the agents that can discover it
 - **Frontmatter editor** — toggle skill settings (`disable-model-invocation`, descriptions, etc.) without touching raw YAML
-- **Search** — full-text search across all skill files
+- **Search** — filter the skill library by name, description, file name, agent, and location
 - **Dashboard** — usage analytics (views, edits, saves) tracked locally
 - **Backpack** — select skill copies and export them in a ZIP with an inventory and agent-readable setup instructions; the receiving computer does not need Popopen
 - **Bulk operations** — batch toggle frontmatter fields and compare declared tools across selected copies

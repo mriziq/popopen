@@ -1,6 +1,3 @@
-const SEARCH_DEBOUNCE_MS = 200;
-const MIN_CONTENT_SEARCH_LENGTH = 2;
-const MAX_SEARCH_RESULTS = 10;
 const SCRIPT_FILE_EXTENSIONS = ['.js', '.ts', '.py'];
 
 const MUTUALLY_EXCLUSIVE_FILTERS = [
@@ -11,21 +8,11 @@ const AGENT_FILTERS = {
   claudeCode: 'Claude Code', codex: 'Codex', opencode: 'OpenCode', hermes: 'Hermes', pi: 'Pi',
 };
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
 const Search = {
   container: null,
   onFilter: null,
   query: '',
   filters: { localOnly: false, linkedOnly: false, hasScripts: false, globalLocation: false, projectLocation: false, externalLocation: false, claudeCode: false, codex: false, opencode: false, hermes: false, pi: false },
-  debounceTimer: null,
-  searchRequestId: 0,
-  resultsContainer: null,
-  onResultClick: null,
 
   init(container, onFilter) {
     this.container = container;
@@ -38,7 +25,7 @@ const Search = {
     wrapper.className = 'search-wrapper';
     wrapper.innerHTML = `
       <div class="search-bar">
-        <input type="text" class="search-input" placeholder="Search skills... (&#8984;K)">
+        <input type="text" class="search-input" placeholder="Filter skills... (&#8984;K)">
       </div>
       <div class="filter-pills">
         <button class="pill" data-filter="localOnly" title="Skills you created yourself">Custom</button>
@@ -53,13 +40,11 @@ const Search = {
       <div class="filter-pills filter-pills-agents" aria-label="Filter by agent">
         ${Object.entries(AGENT_FILTERS).map(([key, label]) => `<button class="pill" data-filter="${key}">${label}</button>`).join('')}
       </div>
-      <div class="search-results hidden"></div>
     `;
 
     this.container.appendChild(wrapper);
 
     const input = wrapper.querySelector('.search-input');
-    this.resultsContainer = wrapper.querySelector('.search-results');
 
     this.attachInputHandler(input);
     this.attachPillHandlers(wrapper);
@@ -69,13 +54,7 @@ const Search = {
   attachInputHandler(input) {
     input.addEventListener('input', () => {
       this.query = input.value;
-      this.searchRequestId++;
-      this.resultsContainer.classList.add('hidden');
-      clearTimeout(this.debounceTimer);
-      this.debounceTimer = setTimeout(() => {
-        if (this.onFilter) this.onFilter(this.query, this.filters);
-        this.doContentSearch(this.query);
-      }, SEARCH_DEBOUNCE_MS);
+      if (this.onFilter) this.onFilter(this.query, this.filters);
     });
   },
 
@@ -98,7 +77,6 @@ const Search = {
         btn.classList.toggle('active', this.filters[filter]);
         this.clearConflictingFilters(wrapper, filter);
         if (this.onFilter) this.onFilter(this.query, this.filters);
-        this.doContentSearch(this.query);
       });
     });
   },
@@ -111,55 +89,6 @@ const Search = {
         input.select();
       }
     });
-  },
-
-  renderResults(results) {
-    this.resultsContainer.classList.remove('hidden');
-    this.resultsContainer.innerHTML = results.slice(0, MAX_SEARCH_RESULTS).map(r =>
-      `<div class="search-result" data-path="${escapeHtml(r.skill)}/${escapeHtml(r.file)}" data-instance-id="${escapeHtml(r.instanceId)}">
-        <span class="sr-skill">${escapeHtml(r.skill)}</span>
-        <span class="sr-file">${escapeHtml(r.file)}:${r.line} · ${escapeHtml(r.location || 'global')} · ${escapeHtml((r.agents || []).join(', '))}</span>
-        <span class="sr-context">${escapeHtml(r.context)}</span>
-      </div>`
-    ).join('');
-
-    this.resultsContainer.querySelectorAll('.search-result').forEach(el => {
-      el.addEventListener('click', () => {
-        this.resultsContainer.classList.add('hidden');
-        if (this.onResultClick) this.onResultClick(el.dataset.path, el.dataset.instanceId);
-      });
-    });
-  },
-
-  async doContentSearch(query) {
-    const requestId = ++this.searchRequestId;
-    if (!query || query.length < MIN_CONTENT_SEARCH_LENGTH) {
-      this.resultsContainer.classList.add('hidden');
-      return;
-    }
-    try {
-      const data = await API.search(query);
-      if (requestId !== this.searchRequestId || query !== this.query) return;
-      const results = (data.results || []).filter(result => this.matchesResultFilters(result));
-      if (results.length === 0) {
-        this.resultsContainer.classList.add('hidden');
-        return;
-      }
-      this.renderResults(results);
-    } catch {}
-  },
-
-  matchesResultFilters(result) {
-    if (this.filters.localOnly && result.isSymlink) return false;
-    if (this.filters.linkedOnly && !result.isSymlink) return false;
-    if (this.filters.hasScripts && !result.hasScripts) return false;
-    if (this.filters.globalLocation && result.location !== 'global') return false;
-    if (this.filters.projectLocation && result.location !== 'project') return false;
-    if (this.filters.externalLocation && result.location !== 'external') return false;
-    const activeAgents = Object.keys(AGENT_FILTERS)
-      .filter(key => this.filters[key])
-      .map(key => AGENT_FILTERS[key]);
-    return !activeAgents.length || activeAgents.some(agent => (result.agents || []).includes(agent));
   },
 
   filterByQuery(skills, query) {

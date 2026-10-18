@@ -63,10 +63,6 @@ const API = {
     return fetchJson('/api/analytics');
   },
 
-  search(query) {
-    return fetchJson(`/api/search?q=${encodeURIComponent(query)}`);
-  },
-
   getDashboard() {
     return fetchJson('/api/dashboard');
   },

@@ -25,7 +25,7 @@ Popopen runs a local web server and opens in the developer’s browser. Skills a
 ## Capabilities and Constraints
 
 - The viewer discovers global, project, and configured external skill folders for Claude Code, Codex, OpenCode, Hermes, and Pi. Shared folders are represented once with all supported agents listed; same-named copies remain separate instances.
-- Current capabilities include source-aware browsing of discovered skill files, rendered previews for Markdown files, Markdown editing, frontmatter and permission editing, search, dashboard analytics, bulk operations, backpack ZIP export, Claude CLI update checks for eligible installed skills, and uninstall.
+- Current capabilities include source-aware browsing of discovered skill files, rendered previews for Markdown files, Markdown editing, frontmatter and permission editing, sidebar filtering by skill metadata and source, dashboard analytics, bulk operations, backpack ZIP export, Claude CLI update checks for eligible installed skills, and uninstall.
 - Backpack export preserves each selected skill folder under a unique archive path and includes a manifest plus agent setup instructions. The receiving agent can install the skills without Popopen installed.
 - V1 portability uses direct agent setup from the backpack; Popopen has no separate import screen.
 - The receiving agent should ask before replacing a same-named skill already at the destination; never overwrite silently.
