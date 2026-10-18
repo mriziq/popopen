@@ -1,6 +1,6 @@
 const express = require('express');
 const { execFile } = require('child_process');
-const { scanSkills } = require('../lib/scanner');
+const { getSkillInstance } = require('../lib/scanner');
 const updateState = require('../lib/update-state');
 
 const router = express.Router();
@@ -19,8 +19,10 @@ router.get('/updates/check', async (req, res) => {
     return res.json(cached.data);
   }
 
-  const skills = scanSkills();
-  const skillData = skills.find(s => s.name === skill);
+  let skillData;
+  try { skillData = getSkillInstance(skill); } catch (err) {
+    return res.status(err.message.includes('ambiguous') ? 409 : 404).json({ error: err.message });
+  }
 
   if (!skillData || !skillData.sourceUrl || !skillData.skillFolderHash) {
     return res.json({
@@ -111,6 +113,14 @@ router.post('/updates/apply', (req, res) => {
   const skill = req.query.skill;
   if (!skill) return res.status(400).json({ error: 'skill query parameter required' });
 
+  let skillData;
+  try { skillData = getSkillInstance(skill); } catch (err) {
+    return res.status(err.message.includes('ambiguous') ? 409 : 404).json({ error: err.message });
+  }
+  if (!skillData || skillData.scope !== 'installed' || !skillData.sourceUrl) {
+    return res.status(400).json({ error: 'This skill instance cannot be updated with the Claude Code CLI' });
+  }
+
   const existing = updateState.get(skill);
   if (existing && existing.status === 'in-progress') {
     return res.status(409).json({ error: 'Update already in progress', state: existing });
@@ -119,7 +129,7 @@ router.post('/updates/apply', (req, res) => {
   updateState.start(skill);
   res.status(202).json({ ok: true, started: true });
 
-  execFile('npx', ['-y', '@anthropic-ai/claude-code', 'skills', 'update', skill], {
+  execFile('npx', ['-y', '@anthropic-ai/claude-code', 'skills', 'update', skillData.name], {
     timeout: 5 * 60 * 1000,
   }, (err) => {
     if (err) {

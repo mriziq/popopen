@@ -1,83 +1,50 @@
 # Releasing Popopen
 
-Releases are fully automated. Every push to `main` triggers the release workflow — no manual version bumps, no manual npm publishes. The version bump and publish only happen when a commit message signals a meaningful change.
+Releases are automated with `semantic-release`. The GitHub Actions workflow runs on pushes to `main`; it analyzes commit messages since the previous release and publishes only when they indicate a release-worthy change.
 
----
+## Commit messages
 
-## How releases are triggered
+Use Conventional Commits so the release workflow can determine the version change:
 
-The release workflow reads your commit messages using the [Conventional Commits](https://www.conventionalcommits.org/) format to decide whether to release and what version to bump.
+| Commit prefix | Release effect |
+|---|---|
+| `fix: ...` | Patch release |
+| `feat: ...` | Minor release |
+| `feat!: ...` or a `BREAKING CHANGE:` footer | Major release |
+| `chore:`, `docs:`, `refactor:`, `style:` | No release by default |
 
-| Commit prefix | What it signals | Version bump |
-|---|---|---|
-| `fix: ...` | Bug fix | Patch — `1.0.0 → 1.0.1` |
-| `feat: ...` | New feature, backwards compatible | Minor — `1.0.0 → 1.1.0` |
-| `feat!:` or `BREAKING CHANGE:` in body | Breaking change | Major — `1.0.0 → 2.0.0` |
-| `chore:`, `docs:`, `refactor:`, `style:` | Maintenance, no user impact | No release |
+Examples:
 
-### Examples
-
-```bash
-# Cuts a patch release
-git commit -m "fix: sidebar not updating when skill is deleted"
-
-# Cuts a minor release
-git commit -m "feat: add keyboard shortcut to open search"
-
-# Cuts a major release
-git commit -m "feat!: rename PORT env var to POPOPEN_PORT"
-
-# No release — workflow runs but nothing is published
-git commit -m "chore: update dev dependencies"
-git commit -m "docs: improve README install instructions"
+```text
+fix: keep project skill search scoped to its directory
+feat: add keyboard shortcut to open search
+feat!: change the skills directory environment variable
 ```
 
----
+## Workflow
 
-## What happens on a release
+The workflow in `.github/workflows/release.yml` checks out `main`, sets up Node.js 22, installs dependencies with `npm install --no-audit --no-fund`, and runs `npx semantic-release`.
 
-When a releasable commit lands on `main`, the workflow automatically:
+The configuration in `.releaserc.json` uses the commit history to determine the next version, updates `package.json` and `CHANGELOG.md`, creates a GitHub release, and publishes the package to npm with provenance enabled. The release commit is pushed back to `main` with `[skip ci]`.
 
-1. Determines the next version from commit messages since the last release
-2. Updates `package.json` with the new version
-3. Generates / updates `CHANGELOG.md`
-4. Commits those changes back to `main` with `[skip ci]` to avoid a loop
-5. Creates a GitHub Release with generated release notes
-6. Publishes the new version to npm
+The workflow grants GitHub Actions `contents`, `issues`, `pull-requests`, and `id-token` permissions. It passes `NPM_TOKEN` as the npm authentication token. Any npm trusted-publisher configuration is managed outside this repository and is not verified here.
 
----
+## Verify a release
 
-## Verifying a release
-
-After the workflow completes, confirm the new version is live:
+After the workflow completes, check the published package version with:
 
 ```bash
-npm view popopen
+npm view popopen version
 ```
 
-Or check the GitHub Releases page: `github.com/mriziq/popopen/releases`
+Then confirm the matching GitHub release exists at `github.com/mriziq/popopen/releases`.
 
----
+## Deprecating a release
 
-## Emergency: deprecating or unpublishing a version
-
-If a published version has a critical bug, deprecate it rather than unpublish:
+For a release with a critical issue, deprecate the affected version with a clear upgrade message:
 
 ```bash
-npm deprecate popopen@1.0.1 "Critical bug, please upgrade to 1.0.2"
+npm deprecate popopen@<version> "Please upgrade to <fixed-version>: <reason>"
 ```
 
-npm only allows unpublishing within 72 hours and only if no other packages depend on it:
-
-```bash
-npm unpublish popopen@1.0.1
-```
-
----
-
-## Infrastructure
-
-- **Workflow file:** `.github/workflows/release.yml`
-- **Release config:** `.releaserc.json`
-- **GitHub secret required:** `NPM_TOKEN` (Automation token from npmjs.com)
-- **Trusted Publisher:** configured on npmjs.com for `mriziq/popopen` / `release.yml`
+See `.github/workflows/release.yml` and `.releaserc.json` as the source of truth for release configuration.

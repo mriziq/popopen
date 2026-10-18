@@ -86,7 +86,7 @@
 
   /* Easing */
   --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 
@@ -402,6 +402,8 @@ body { display: flex; }
   color: var(--copper);
 }
 
+.nav-btn.backpack-nav { width: auto; gap: 5px; padding: 0 8px; font-size: 11px; font-weight: 600; }
+
 
 /* ============================================
    SEARCH
@@ -541,8 +543,22 @@ body { display: flex; }
 
 .skill-folder { user-select: none; }
 
+.skill-group { margin: 2px 0 8px; }
+.skill-group-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 14px 3px 30px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.skill-group-label small { color: var(--text-dim); font-size: 10px; font-weight: 500; letter-spacing: 0; }
+
 .skill-folder-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   padding: 5px 8px;
@@ -581,8 +597,25 @@ body { display: flex; }
 .skill-folder-header .skill-name-label {
   font-size: 13px;
   font-weight: 500;
-  flex: 1;
+  flex: 1 1 54px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.instance-agents {
+  order: 9;
+  flex: 1 0 calc(100% - 30px);
+  margin-left: 30px;
+  color: var(--text-dim);
+  font-size: 10px;
+  max-width: calc(100% - 30px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.instance-select { order: 7; width: 13px; height: 13px; margin: 0 1px; accent-color: var(--copper); cursor: pointer; flex: 0 0 auto; }
 
 .skill-folder-header .symlink-badge {
   font-size: 10px;
@@ -594,6 +627,7 @@ body { display: flex; }
 }
 
 .quick-toggle {
+  order: 8;
   margin-left: auto;
   font-size: 11px;
   font-weight: 500;
@@ -875,6 +909,16 @@ body { display: flex; }
   white-space: nowrap;
 }
 
+#file-meta .instance-meta {
+  margin-left: auto;
+  padding-left: 16px;
+  color: var(--text-dim);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 #file-actions {
   display: flex;
   gap: 6px;
@@ -920,6 +964,7 @@ body { display: flex; }
 .btn-primary:hover {
   background: var(--copper-bright);
   border-color: var(--copper-bright);
+  color: #000;
 }
 
 .btn-sm {
@@ -957,6 +1002,7 @@ body { display: flex; }
 .btn-primary-sm:hover {
   background: var(--copper-bright);
   border-color: var(--copper-bright);
+  color: #000;
 }
 
 .card-update-btn {
@@ -990,14 +1036,14 @@ body { display: flex; }
   content: '';
   position: absolute;
   inset: 0;
-  width: 40%;
-  background: linear-gradient(90deg, transparent, var(--copper), transparent);
-  animation: card-update-progress-slide 1.2s linear infinite;
+  width: 100%;
+  background: var(--copper);
+  opacity: 0.3;
+  animation: card-update-progress-pulse 1.2s ease-in-out infinite alternate;
 }
 
-@keyframes card-update-progress-slide {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(350%); }
+@keyframes card-update-progress-pulse {
+  to { opacity: 0.9; }
 }
 
 .card-update-progress-label {
@@ -1039,9 +1085,9 @@ body { display: flex; }
   animation: toast-leave 0.18s ease-in forwards;
 }
 
-.toast--success { border-left: 3px solid var(--green); }
-.toast--error   { border-left: 3px solid var(--red); }
-.toast--info    { border-left: 3px solid var(--copper); }
+.toast--success { box-shadow: inset 2px 0 0 var(--green); }
+.toast--error   { box-shadow: inset 2px 0 0 var(--red); }
+.toast--info    { box-shadow: inset 2px 0 0 var(--copper); }
 
 .toast-body { flex: 1; }
 
@@ -1110,7 +1156,7 @@ body { display: flex; }
 .btn-danger:hover {
   background: var(--red);
   border-color: var(--red);
-  color: #fff;
+  color: #000;
 }
 
 .btn-danger:disabled {

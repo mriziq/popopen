@@ -10,7 +10,7 @@ const Bulk = {
       <span class="bulk-count"></span>
       <button class="btn-sm" id="bulk-enable">Enable All</button>
       <button class="btn-sm" id="bulk-disable">Disable All</button>
-      <button class="btn-sm" id="bulk-export">Export ZIP</button>
+      <button class="btn-sm" id="bulk-export">Create backpack</button>
       <button class="btn-sm" id="bulk-compare">Compare Tools</button>
       <button class="btn-sm" id="bulk-clear">Clear</button>
     `;
@@ -43,7 +43,7 @@ const Bulk = {
       return;
     }
     this.actionBar.classList.remove('hidden');
-    this.actionBar.querySelector('.bulk-count').textContent = `${this.selectedSkills.size} skill(s) selected`;
+    this.actionBar.querySelector('.bulk-count').textContent = `${this.selectedSkills.size} ${this.selectedSkills.size === 1 ? 'skill copy' : 'skill copies'} selected`;
   },
 
   async bulkToggle(disableValue) {
@@ -63,7 +63,7 @@ const Bulk = {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'skills-export.zip';
+      a.download = 'popopen-skills-backpack.zip';
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -89,14 +89,14 @@ const Bulk = {
               <thead>
                 <tr>
                   <th>Tool</th>
-                  ${skills.map(s => `<th>${s}</th>`).join('')}
+                  ${skills.map(id => `<th>${data.skills[id]?.name || 'Skill'}<br><small>${data.skills[id]?.sourcePath || ''}</small></th>`).join('')}
                 </tr>
               </thead>
               <tbody>
                 ${data.allTools.map(tool => `
                   <tr>
                     <td><code>${tool}</code></td>
-                    ${skills.map(s => `<td class="check-cell">${data.skills[s]?.includes(tool) ? '<span class="check-mark">&#10003;</span>' : ''}</td>`).join('')}
+                    ${skills.map(id => `<td class="check-cell">${data.skills[id]?.tools.includes(tool) ? '<span class="check-mark">&#10003;</span>' : ''}</td>`).join('')}
                   </tr>
                 `).join('')}
               </tbody>

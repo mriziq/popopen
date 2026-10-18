@@ -1,5 +1,7 @@
 const express = require('express');
-const { uninstallSkill, scanSkills } = require('../lib/scanner');
+const path = require('path');
+const os = require('os');
+const { uninstallSkill, getSkillInstance, scanSkills } = require('../lib/scanner');
 const updateState = require('../lib/update-state');
 
 const router = express.Router();
@@ -9,19 +11,33 @@ router.get('/uninstall/preview', (req, res) => {
   const skill = req.query.skill;
   if (!skill) return res.status(400).json({ error: 'skill query parameter required' });
 
-  const skills = scanSkills();
-  const skillData = skills.find(s => s.name === skill);
-  if (!skillData) return res.status(404).json({ error: 'Skill not found' });
+  let skillData;
+  try { skillData = getSkillInstance(skill); } catch (err) {
+    return res.status(err.message.includes('ambiguous') ? 409 : 404).json({ error: err.message });
+  }
+  let willRemove;
+  if (skillData.isSymlink) {
+    willRemove = [skillData.location === 'project' ? 'Project skill link' : 'Global skill link'];
+    const agentsRoot = path.join(os.homedir(), '.agents', 'skills') + path.sep;
+    const hasOtherLink = scanSkills().some(item => item.id !== skillData.id && item.isSymlink && item.realPath === skillData.realPath);
+    if (skillData.location === 'global' && skillData.realPath.startsWith(agentsRoot) && !hasOtherLink) {
+      willRemove.push('Installed skill source under ~/.agents/skills', 'Skill lock file entry');
+    } else if (hasOtherLink) {
+      willRemove.push('The shared skill source will remain because another link uses it');
+    }
+  } else {
+    willRemove = [`${skillData.location === 'project' ? 'Project' : skillData.location === 'external' ? 'External' : 'Global'} skill directory (${skillData.fileCount} files)`];
+  }
 
   res.json({
-    skill: skill,
+    skill: skillData.name,
+    instanceId: skillData.id,
+    sourcePath: skillData.sourcePath,
     scope: skillData.scope,
     isSymlink: skillData.isSymlink,
     source: skillData.source,
     fileCount: skillData.fileCount,
-    willRemove: skillData.scope === 'installed'
-      ? [`Symlink ~/.claude/skills/${skill}`, `Source ~/.agents/skills/${skill}`, 'Lock file entry']
-      : [`Directory ~/.claude/skills/${skill} (${skillData.fileCount} files)`],
+    willRemove,
   });
 });
 

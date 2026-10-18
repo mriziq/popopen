@@ -26,6 +26,10 @@
   let activeView = 'welcome';
   let activeTab = 'content';
 
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+  }
+
   function hideAllViews() {
     ALL_VIEWS.forEach(id => {
       const el = document.getElementById(id);
@@ -69,8 +73,9 @@
     const isInstalled = currentSkill?.scope === 'installed';
     const title = isInstalled ? 'Installed skills cannot be renamed' : 'Click to rename';
     fileMeta.innerHTML = `
-      <span class="skill-name" data-skill="${skillName}" title="${title}">${skillName}</span>
-      <span class="file-path">${fileName}</span>
+      <span class="skill-name" data-skill="${escapeHtml(skillName)}" title="${escapeHtml(title)}">${escapeHtml(skillName)}</span>
+      <span class="file-path">${escapeHtml(fileName)}</span>
+      <span class="instance-meta" title="${escapeHtml(currentSkill?.sourcePath || '')}">${escapeHtml(currentSkill?.location || '')} · ${escapeHtml((currentSkill?.agents || []).join(', '))}</span>
     `;
 
     if (!isInstalled) {
@@ -112,10 +117,10 @@
     }
 
     try {
-      currentData = await API.getFile(filePath);
+      currentData = await API.getFile(filePath, skill.id);
       showView('viewer', { tab: 'content' });
       btnEdit.classList.remove('hidden');
-      Viewer.render(currentData.body, currentData.frontmatter);
+      Viewer.render(currentData.body, currentData.frontmatter, currentData.renderedBody);
     } catch (err) {
       renderLoadError(err.message);
     }
@@ -128,11 +133,11 @@
       return;
     }
     try {
-      await API.renameSkill(original, newName);
-      currentPath = currentPath.replace(original, newName);
-      currentSkill = { ...currentSkill, name: newName };
+      const renamed = await API.renameSkill(currentSkill.id, original, newName);
+      currentPath = `${newName}/${getFileName(currentPath)}`;
+      currentSkill = { ...currentSkill, id: renamed.instanceId, name: newName };
       await Sidebar.load();
-      Sidebar.setActive(currentPath);
+      Sidebar.setActive(currentPath, currentSkill.id);
       nameEl.textContent = newName;
       nameEl.dataset.skill = newName;
       input.replaceWith(nameEl);
@@ -207,12 +212,12 @@
 
   async function doSave(content) {
     try {
-      await API.saveFile(currentPath, content);
+      await API.saveFile(currentPath, content, currentSkill.id);
       API.trackEvent(getSkillName(currentPath), 'save', getFileName(currentPath));
-      currentData = await API.getFile(currentPath);
+      currentData = await API.getFile(currentPath, currentSkill.id);
       exitEditMode();
       showView('viewer', { tab: 'content' });
-      Viewer.render(currentData.body, currentData.frontmatter);
+      Viewer.render(currentData.body, currentData.frontmatter, currentData.renderedBody);
       if (typeof Toast !== 'undefined') Toast.success(`Saved <strong>${getFileName(currentPath)}</strong>`);
     } catch (err) {
       if (typeof Toast !== 'undefined') Toast.error(`Failed to save: ${err.message}`);
@@ -232,7 +237,7 @@
       showView('viewer', { tab: 'content' });
     } else if (tabName === 'permissions' && typeof Permissions !== 'undefined') {
       showView('permissions-view', { tab: 'permissions' });
-      if (currentSkill) Permissions.load(currentSkill.name);
+      if (currentSkill) Permissions.load(currentSkill.id);
     }
   }
 
@@ -252,16 +257,16 @@
     btnUninstall.classList.add('hidden');
 
     FrontmatterEditor.open(
-      currentSkill.name,
+      currentSkill.id,
       currentData.frontmatter,
       currentData.body,
       async () => {
-        currentData = await API.getFile(currentPath);
+        currentData = await API.getFile(currentPath, currentSkill.id);
         showView('viewer', { tab: 'content' });
         btnFrontmatter.classList.remove('hidden');
         btnEdit.classList.remove('hidden');
         btnUninstall.classList.remove('hidden');
-        Viewer.render(currentData.body, currentData.frontmatter);
+        Viewer.render(currentData.body, currentData.frontmatter, currentData.renderedBody);
         Sidebar.load();
       },
       () => {
@@ -282,7 +287,7 @@
 
   function uninstallCurrentSkill() {
     if (!currentSkill || typeof Dashboard === 'undefined') return;
-    Dashboard.showUninstallConfirm(currentSkill.name, async () => {
+    Dashboard.showUninstallConfirm(currentSkill.id, async () => {
       currentPath = null;
       currentData = null;
       currentSkill = null;
@@ -294,12 +299,12 @@
   function cancelEdit() {
     exitEditMode();
     showView('viewer', { tab: 'content' });
-    if (currentData) Viewer.render(currentData.body, currentData.frontmatter);
+    if (currentData) Viewer.render(currentData.body, currentData.frontmatter, currentData.renderedBody);
   }
 
   function handleLiveReload(event) {
     Sidebar.load();
-    if (currentPath && event.path && event.path.includes(currentPath.split('/').pop())) {
+    if (currentSkill && event.path && (event.path.startsWith(currentSkill.sourcePath) || event.path.startsWith(currentSkill.realPath))) {
       onFileSelect(currentPath, currentSkill);
     }
   }
@@ -310,12 +315,12 @@
     Sidebar.applyFilters(query, filters);
   });
 
-  Search.onResultClick = (filePath) => {
+  Search.onResultClick = (filePath, instanceId) => {
     const skillName = getSkillName(filePath);
-    const skill = Sidebar.skills.find(s => s.name === skillName);
+    const skill = Sidebar.skills.find(s => s.id === instanceId) || Sidebar.skills.find(s => s.name === skillName);
     if (skill) {
-      Sidebar.setActive(filePath);
-      Sidebar.expandSkill(skillName);
+      Sidebar.setActive(filePath, skill.id);
+      Sidebar.expandSkill(skillName, skill.id);
       onFileSelect(filePath, skill);
     }
   };
@@ -329,13 +334,20 @@
   const appShell = document.getElementById('app-shell');
   appShell.addEventListener('animationend', () => {
     if (typeof Dashboard !== 'undefined') {
-      showView('dashboard-view');
-      Dashboard.load();
+      showView('welcome');
     }
   }, { once: true });
 
   const btnCollapseAll = document.getElementById('btn-collapse-all');
   if (btnCollapseAll) btnCollapseAll.addEventListener('click', () => Sidebar.toggleAllFolders(btnCollapseAll));
+  const btnBackpack = document.getElementById('btn-backpack');
+  if (btnBackpack) btnBackpack.addEventListener('click', () => {
+    if (!Bulk.selectedSkills.size) {
+      if (typeof Toast !== 'undefined') Toast.show('Select skill copies in the library to create a backpack.');
+      return;
+    }
+    Bulk.exportZip();
+  });
 
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => handleNavButton(btn.dataset.view));

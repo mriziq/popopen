@@ -1,7 +1,7 @@
 {
   "name": "popopen",
   "version": "1.0.0",
-  "description": "Visual UI for browsing and editing Claude Code skills",
+  "description": "A local workspace for browsing, editing, and moving coding-agent skills",
   "main": "server/index.js",
   "bin": {
     "popopen": "bin/popopen.js"
@@ -19,6 +19,12 @@
   },
   "keywords": [
     "claude",
+    "codex",
+    "opencode",
+    "hermes",
+    "pi",
+    "agent-skills",
+    "skills-manager",
     "skills",
     "markdown"
   ],
@@ -26,7 +32,7 @@
   "license": "ISC",
   "type": "commonjs",
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19.0"
   },
   "repository": {
     "type": "git",

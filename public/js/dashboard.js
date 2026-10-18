@@ -43,8 +43,8 @@ const Dashboard = {
     } catch {}
   },
 
-  showProgressBar(skillName) {
-    const card = this.container.querySelector(`.skill-card[data-skill="${skillName}"]`);
+  showProgressBar(instanceId) {
+    const card = this.container.querySelector(`.skill-card[data-instance-id="${instanceId}"]`);
     if (!card) return null;
     const footer = card.querySelector('.card-footer');
     if (!footer) return null;
@@ -59,28 +59,28 @@ const Dashboard = {
     return progress;
   },
 
-  removeProgressBar(skillName) {
-    const card = this.container.querySelector(`.skill-card[data-skill="${skillName}"]`);
+  removeProgressBar(instanceId) {
+    const card = this.container.querySelector(`.skill-card[data-instance-id="${instanceId}"]`);
     const progress = card?.querySelector('.card-update-progress');
     if (progress) progress.remove();
   },
 
-  async pollUpdateStatus(skillName) {
+  async pollUpdateStatus(instanceId) {
     const tick = async () => {
       try {
-        const { state } = await API.getUpdateStatus(skillName);
-        if (!state) { this.removeProgressBar(skillName); return; }
+        const { state } = await API.getUpdateStatus(instanceId);
+        if (!state) { this.removeProgressBar(instanceId); return; }
         if (state.status === 'in-progress') return setTimeout(tick, 1000);
-        this.removeProgressBar(skillName);
+        this.removeProgressBar(instanceId);
         if (state.status === 'success') {
-          if (typeof Toast !== 'undefined') Toast.success(`<strong>${skillName}</strong> updated.`);
-          await API.dismissUpdateStatus(skillName);
+          if (typeof Toast !== 'undefined') Toast.success('Skill updated.');
+          await API.dismissUpdateStatus(instanceId);
           await this.load();
         } else {
           if (typeof Toast !== 'undefined') {
-            Toast.error(`<strong>${skillName}</strong> update failed.<br><span style="opacity:0.7;font-size:11px">${state.error || 'Unknown error'}</span>`, { duration: 0 });
+            Toast.error(`Skill update failed.<br><span style="opacity:0.7;font-size:11px">${state.error || 'Unknown error'}</span>`, { duration: 0 });
           }
-          await API.dismissUpdateStatus(skillName);
+          await API.dismissUpdateStatus(instanceId);
         }
       } catch {
         setTimeout(tick, 2000);
@@ -92,16 +92,16 @@ const Dashboard = {
   checkUpdatesInBackground() {
     const updatable = this.skills.filter(s => s.scope === 'installed' && s.sourceUrl && s.skillFolderHash);
     updatable.forEach(skill => {
-      API.checkUpdate(skill.name)
+      API.checkUpdate(skill.id)
         .then(result => {
-          if (result.updateAvailable) this.markCardUpdatable(skill.name);
+          if (result.updateAvailable) this.markCardUpdatable(skill.id);
         })
         .catch(() => {});
     });
   },
 
-  markCardUpdatable(skillName) {
-    const card = this.container.querySelector(`.skill-card[data-skill="${skillName}"]`);
+  markCardUpdatable(instanceId) {
+    const card = this.container.querySelector(`.skill-card[data-instance-id="${instanceId}"]`);
     if (!card) return;
 
     const badges = card.querySelector('.card-badges');
@@ -117,9 +117,9 @@ const Dashboard = {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         try {
-          await API.applyUpdate(skillName);
-          this.showProgressBar(skillName);
-          this.pollUpdateStatus(skillName);
+          await API.applyUpdate(instanceId);
+          this.showProgressBar(instanceId);
+          this.pollUpdateStatus(instanceId);
         } catch (err) {
           if (typeof Toast !== 'undefined') Toast.error(`Failed to start update: ${err.message}`);
         }
@@ -185,9 +185,10 @@ const Dashboard = {
       card.addEventListener('click', (e) => {
         if (e.target.closest('.card-checkbox') || e.target.closest('.card-toggle') ||
             e.target.closest('.card-view-btn') || e.target.closest('.card-uninstall')) return;
-        const skillName = card.dataset.skill;
+        const skill = this.skills.find(s => s.id === card.dataset.instanceId);
+        if (!skill) return;
+        const skillName = skill?.name;
         const filePath = `${skillName}/SKILL.md`;
-        const skill = this.skills.find(s => s.name === skillName);
         if (this.onFileSelect && skill) {
           this.onFileSelect(filePath, skill);
         }
@@ -199,7 +200,7 @@ const Dashboard = {
       btn.addEventListener('click', () => {
         const skillName = btn.dataset.skill;
         const filePath = `${skillName}/SKILL.md`;
-        const skill = this.skills.find(s => s.name === skillName);
+        const skill = this.skills.find(s => s.id === btn.dataset.instanceId);
         if (this.onFileSelect && skill) {
           this.onFileSelect(filePath, skill);
         }
@@ -210,10 +211,10 @@ const Dashboard = {
     this.container.querySelectorAll('.card-toggle').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        const skillName = btn.dataset.skill;
+        const instanceId = btn.dataset.instanceId;
         const current = btn.dataset.disabled === 'true';
         try {
-          await API.patchFrontmatter(skillName, { 'disable-model-invocation': !current });
+          await API.patchFrontmatter(instanceId, { 'disable-model-invocation': !current });
           await this.load();
         } catch (err) {
           console.error('Toggle failed:', err);
@@ -225,8 +226,8 @@ const Dashboard = {
     this.container.querySelectorAll('.card-uninstall').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        const skillName = btn.dataset.skill;
-        await this.showUninstallConfirm(skillName);
+        const instanceId = btn.dataset.instanceId;
+        await this.showUninstallConfirm(instanceId);
       });
     });
 
@@ -235,7 +236,7 @@ const Dashboard = {
       cb.addEventListener('change', (e) => {
         e.stopPropagation();
         if (typeof Bulk !== 'undefined') {
-          Bulk.toggle(cb.dataset.skill);
+          Bulk.toggle(cb.dataset.instanceId);
           this.render();
         }
       });
@@ -244,9 +245,9 @@ const Dashboard = {
     if (typeof Bulk !== 'undefined') Bulk.renderActionBar();
   },
 
-  async showUninstallConfirm(skillName, onComplete) {
+  async showUninstallConfirm(instanceId, onComplete) {
     try {
-      const preview = await API.uninstallPreview(skillName);
+      const preview = await API.uninstallPreview(instanceId);
 
       const overlay = document.createElement('div');
       overlay.className = 'modal-overlay';
@@ -293,7 +294,7 @@ const Dashboard = {
         btn.textContent = 'Removing...';
         btn.disabled = true;
         try {
-          await API.uninstallSkill(skillName);
+          await API.uninstallSkill(instanceId);
           overlay.remove();
           if (onComplete) await onComplete();
           else await this.load();
@@ -311,17 +312,19 @@ const Dashboard = {
     const stats = this.analytics && this.analytics[skill.name];
     const viewCount = stats ? stats.views : 0;
     const disabled = skill.frontmatter && skill.frontmatter['disable-model-invocation'];
-    const isSelected = typeof Bulk !== 'undefined' && Bulk.selectedSkills.has(skill.name);
+    const isSelected = typeof Bulk !== 'undefined' && Bulk.selectedSkills.has(skill.id);
     const scope = skill.scope || (skill.isSymlink ? 'installed' : 'custom');
 
     return `
-      <div class="skill-card" data-skill="${skill.name}">
+      <div class="skill-card" data-instance-id="${skill.id}" data-skill="${skill.name}">
         <div class="card-scope-indicator scope-${scope}"></div>
         <div class="card-header">
-          <input type="checkbox" class="card-checkbox" data-skill="${skill.name}" ${isSelected ? 'checked' : ''}>
+          <input type="checkbox" class="card-checkbox" data-instance-id="${skill.id}" ${isSelected ? 'checked' : ''}>
           <h3>${skill.name}</h3>
           <div class="card-badges">
             <span class="badge badge-scope-${scope}">${scope === 'installed' ? 'installed' : 'custom'}</span>
+            <span class="badge">${skill.location}</span>
+            <span class="badge">${(skill.agents || []).join(', ')}</span>
             ${disabled ? '<span class="badge badge-disabled">disabled</span>' : ''}
             ${skill.hasGit ? '<span class="badge badge-git">git</span>' : ''}
           </div>
@@ -340,11 +343,11 @@ const Dashboard = {
           </div>
         </div>
         <div class="card-footer">
-          <button class="card-toggle btn-sm" data-skill="${skill.name}" data-disabled="${!!disabled}">
+          <button class="card-toggle btn-sm" data-instance-id="${skill.id}" data-disabled="${!!disabled}">
             ${disabled ? 'Enable' : 'Disable'}
           </button>
-          <button class="card-view-btn btn-sm btn-primary-sm" data-skill="${skill.name}">View</button>
-          <button class="card-uninstall btn-sm btn-danger-sm" data-skill="${skill.name}" title="Uninstall ${skill.name}">
+          <button class="card-view-btn btn-sm btn-primary-sm" data-instance-id="${skill.id}" data-skill="${skill.name}">View</button>
+          <button class="card-uninstall btn-sm btn-danger-sm" data-instance-id="${skill.id}" title="Uninstall ${skill.name}">
             <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 016 6v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm2.5 0a.5.5 0 01.5.5v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm3 .5a.5.5 0 00-1 0v6a.5.5 0 001 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 01-1 1H13v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4h-.5a1 1 0 01-1-1V2a1 1 0 011-1H6a1 1 0 011-1h2a1 1 0 011 1h3.5a1 1 0 011 1v1zM4.118 4L4 4.059V13a1 1 0 001 1h6a1 1 0 001-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
           </button>
         </div>

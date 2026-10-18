@@ -25,6 +25,10 @@ function getSkillScope(skill) {
   return skill.scope || (skill.isSymlink ? 'installed' : 'custom');
 }
 
+function escapeSkillText(value) {
+  return String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+}
+
 const Sidebar = {
   container: null,
   skills: [],
@@ -48,11 +52,14 @@ const Sidebar = {
   },
 
   updateLocalLocationVisibility() {
-    const hasLocal = this.skills.some(s => s.location === 'local');
-    const localPill = document.querySelector('[data-filter="localLocation"]');
+    const hasLocal = this.skills.some(s => s.location === 'project');
+    const hasExternal = this.skills.some(s => s.location === 'external');
+    const localPill = document.querySelector('[data-filter="projectLocation"]');
     const locationRow = document.querySelector('.filter-pills-location');
-    if (locationRow) locationRow.style.display = hasLocal ? '' : 'none';
+    if (locationRow) locationRow.style.display = (hasLocal || hasExternal || this.skills.length > 0) ? '' : 'none';
     if (localPill) localPill.disabled = !hasLocal;
+    const externalPill = document.querySelector('[data-filter="externalLocation"]');
+    if (externalPill) externalPill.disabled = !hasExternal;
   },
 
   applyFilters(query, filters) {
@@ -67,17 +74,23 @@ const Sidebar = {
     const disabledByModel = skill.frontmatter && skill.frontmatter['disable-model-invocation'];
     const scope = getSkillScope(skill);
     const location = skill.location || 'global';
-    const scopeTitle = scope === 'installed' ? 'Installed from remote source' : 'Custom / user-created';
-    const scopeLabel = scope === 'installed' ? 'IN' : 'CU';
+    const scopeTitle = scope === 'installed' ? 'Installed from remote source' : 'Skill folder';
+    const scopeLabel = scope === 'installed' ? 'INSTALLED' : scope === 'custom' ? 'CUSTOM' : 'LINKED';
     const toggleTitle = disabledByModel ? 'Model invocation disabled' : 'Model invocation enabled';
     const toggleIcon = disabledByModel ? '&#9676;' : '&#9679;';
+    const locationLabel = skill.location === 'project' ? 'PROJECT' : skill.location === 'external' ? 'EXTERNAL' : 'GLOBAL';
+    const agents = (skill.agents || []).join(', ');
 
     header.innerHTML = `
       <span class="chevron">&#9654;</span>
       <span class="folder-icon">&#128193;</span>
-      <span class="skill-name-label">${skill.name}</span>
+      <span class="skill-name-label">${escapeSkillText(skill.name)}</span>
       <span class="scope-badge scope-badge-${scope}" title="${scopeTitle}">${scopeLabel}</span>
-      ${location === 'local' ? `<span class="scope-badge scope-badge-local" title="Project-local skill — only active in this project">LO</span>` : ''}
+      <span class="scope-badge scope-badge-local" title="${escapeSkillText(skill.sourcePath)}">${locationLabel}</span>
+      <span class="instance-agents" title="Available to: ${escapeSkillText(agents)}">${escapeSkillText(agents || 'Unknown agent')}</span>
+      ${skill.hermesStatus === 'untrusted' ? '<span class="scope-badge" title="Hermes needs the user to trust this project before loading its project skills">HERMES UNTRUSTED</span>' : ''}
+      ${skill.hermesStatus === 'discovery-disabled' ? '<span class="scope-badge" title="Project skill discovery is disabled in Hermes configuration">HERMES DISABLED</span>' : ''}
+      <input class="instance-select" data-instance-id="${skill.id}" type="checkbox" aria-label="Select this skill copy for backpack export" title="Select for backpack" ${Bulk.selectedSkills.has(skill.id) ? 'checked' : ''}>
       <span class="quick-toggle ${disabledByModel ? 'off' : 'on'}" title="${toggleTitle}">
         ${toggleIcon}
       </span>
@@ -91,11 +104,12 @@ const Sidebar = {
     fileItem.className = 'skill-file';
     const filePath = `${skill.name}/${file}`;
     fileItem.dataset.path = filePath;
-    fileItem.innerHTML = `<span class="file-icon">${iconForFile(file)}</span><span>${file}</span>`;
+    fileItem.dataset.instanceId = skill.id;
+    fileItem.innerHTML = `<span class="file-icon">${iconForFile(file)}</span><span>${escapeSkillText(file)}</span>`;
 
     fileItem.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.setActive(filePath);
+      this.setActive(filePath, skill.id);
       if (this.onFileSelect) this.onFileSelect(filePath, skill);
     });
 
@@ -106,7 +120,7 @@ const Sidebar = {
     toggleBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
       try {
-        await API.patchFrontmatter(skill.name, { 'disable-model-invocation': !disabledByModel });
+        await API.patchFrontmatter(skill.id, { 'disable-model-invocation': !disabledByModel });
         await this.load();
       } catch (err) {
         console.error('Failed to toggle:', err);
@@ -135,6 +149,11 @@ const Sidebar = {
     });
 
     this.attachToggleHandler(header.querySelector('.quick-toggle'), skill, disabledByModel);
+    header.querySelector('.instance-select').addEventListener('click', event => event.stopPropagation());
+    header.querySelector('.instance-select').addEventListener('change', event => {
+      Bulk.toggle(skill.id);
+      event.stopPropagation();
+    });
     this.attachHeaderToggle(header, fileList);
 
     folder.appendChild(header);
@@ -144,15 +163,29 @@ const Sidebar = {
 
   render() {
     this.container.innerHTML = '';
+    const groups = new Map();
     for (const skill of this.filteredSkills) {
-      this.container.appendChild(this.renderSkillFolder(skill));
+      if (!groups.has(skill.name)) groups.set(skill.name, []);
+      groups.get(skill.name).push(skill);
+    }
+    for (const [name, instances] of groups) {
+      const group = document.createElement('section');
+      group.className = 'skill-group';
+      if (instances.length > 1) {
+        const label = document.createElement('div');
+        label.className = 'skill-group-label';
+        label.innerHTML = `<span>${escapeSkillText(name)}</span><small>${instances.length} copies</small>`;
+        group.appendChild(label);
+      }
+      for (const skill of instances) group.appendChild(this.renderSkillFolder(skill));
+      this.container.appendChild(group);
     }
   },
 
-  setActive(filePath) {
+  setActive(filePath, instanceId) {
     this.activeFile = filePath;
     this.container.querySelectorAll('.skill-file').forEach(el => {
-      el.classList.toggle('active', el.dataset.path === filePath);
+      el.classList.toggle('active', el.dataset.path === filePath && (!instanceId || el.dataset.instanceId === instanceId));
     });
   },
 
@@ -170,11 +203,12 @@ const Sidebar = {
       : `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 5h12v1.5H2zM2 9.5h12V11H2z"/></svg>`;
   },
 
-  expandSkill(skillName) {
+  expandSkill(skillName, instanceId) {
     const folders = this.container.querySelectorAll('.skill-folder');
     for (const folder of folders) {
       const name = folder.querySelector('.skill-name-label').textContent;
       if (name !== skillName) continue;
+      if (instanceId && folder.querySelector('.instance-select')?.dataset.instanceId !== instanceId) continue;
       folder.querySelector('.skill-files').classList.add('open');
       folder.querySelector('.chevron').classList.add('open');
       return;

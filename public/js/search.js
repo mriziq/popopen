@@ -5,8 +5,11 @@ const SCRIPT_FILE_EXTENSIONS = ['.js', '.ts', '.py'];
 
 const MUTUALLY_EXCLUSIVE_FILTERS = [
   ['localOnly', 'linkedOnly'],
-  ['globalLocation', 'localLocation'],
+  ['globalLocation', 'projectLocation', 'externalLocation'],
 ];
+const AGENT_FILTERS = {
+  claudeCode: 'Claude Code', codex: 'Codex', opencode: 'OpenCode', hermes: 'Hermes', pi: 'Pi',
+};
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -18,8 +21,9 @@ const Search = {
   container: null,
   onFilter: null,
   query: '',
-  filters: { localOnly: false, linkedOnly: false, hasScripts: false, globalLocation: false, localLocation: false },
+  filters: { localOnly: false, linkedOnly: false, hasScripts: false, globalLocation: false, projectLocation: false, externalLocation: false, claudeCode: false, codex: false, opencode: false, hermes: false, pi: false },
   debounceTimer: null,
+  searchRequestId: 0,
   resultsContainer: null,
   onResultClick: null,
 
@@ -38,12 +42,16 @@ const Search = {
       </div>
       <div class="filter-pills">
         <button class="pill" data-filter="localOnly" title="Skills you created yourself">Custom</button>
-        <button class="pill" data-filter="linkedOnly" title="Skills installed via the Claude Code CLI">3rd Party</button>
+        <button class="pill" data-filter="linkedOnly" title="Skill folders linked from another location">Linked</button>
         <button class="pill" data-filter="hasScripts" title="Skills that include a scripts/ folder with executable code">Scripts</button>
       </div>
       <div class="filter-pills filter-pills-location">
-        <button class="pill" data-filter="globalLocation" title="Skills in ~/.claude/skills — available in every project">Global</button>
-        <button class="pill" data-filter="localLocation" title="Skills in this project's .claude/skills — only active here">Local</button>
+        <button class="pill" data-filter="globalLocation" title="Global skill folders">Global</button>
+        <button class="pill" data-filter="projectLocation" title="Skill folders inside this project">Project</button>
+        <button class="pill" data-filter="externalLocation" title="Configured external skill folders">External</button>
+      </div>
+      <div class="filter-pills filter-pills-agents" aria-label="Filter by agent">
+        ${Object.entries(AGENT_FILTERS).map(([key, label]) => `<button class="pill" data-filter="${key}">${label}</button>`).join('')}
       </div>
       <div class="search-results hidden"></div>
     `;
@@ -61,6 +69,8 @@ const Search = {
   attachInputHandler(input) {
     input.addEventListener('input', () => {
       this.query = input.value;
+      this.searchRequestId++;
+      this.resultsContainer.classList.add('hidden');
       clearTimeout(this.debounceTimer);
       this.debounceTimer = setTimeout(() => {
         if (this.onFilter) this.onFilter(this.query, this.filters);
@@ -70,11 +80,12 @@ const Search = {
   },
 
   clearConflictingFilters(wrapper, activatedFilter) {
-    for (const [a, b] of MUTUALLY_EXCLUSIVE_FILTERS) {
-      const other = activatedFilter === a ? b : activatedFilter === b ? a : null;
-      if (other && this.filters[activatedFilter]) {
-        this.filters[other] = false;
-        wrapper.querySelector(`[data-filter="${other}"]`).classList.remove('active');
+    for (const group of MUTUALLY_EXCLUSIVE_FILTERS) {
+      if (group.includes(activatedFilter) && this.filters[activatedFilter]) {
+        for (const other of group.filter(key => key !== activatedFilter)) {
+          this.filters[other] = false;
+          wrapper.querySelector(`[data-filter="${other}"]`).classList.remove('active');
+        }
       }
     }
   },
@@ -87,6 +98,7 @@ const Search = {
         btn.classList.toggle('active', this.filters[filter]);
         this.clearConflictingFilters(wrapper, filter);
         if (this.onFilter) this.onFilter(this.query, this.filters);
+        this.doContentSearch(this.query);
       });
     });
   },
@@ -104,9 +116,9 @@ const Search = {
   renderResults(results) {
     this.resultsContainer.classList.remove('hidden');
     this.resultsContainer.innerHTML = results.slice(0, MAX_SEARCH_RESULTS).map(r =>
-      `<div class="search-result" data-path="${r.skill}/${r.file}">
-        <span class="sr-skill">${r.skill}</span>
-        <span class="sr-file">${r.file}:${r.line}</span>
+      `<div class="search-result" data-path="${escapeHtml(r.skill)}/${escapeHtml(r.file)}" data-instance-id="${escapeHtml(r.instanceId)}">
+        <span class="sr-skill">${escapeHtml(r.skill)}</span>
+        <span class="sr-file">${escapeHtml(r.file)}:${r.line} · ${escapeHtml(r.location || 'global')} · ${escapeHtml((r.agents || []).join(', '))}</span>
         <span class="sr-context">${escapeHtml(r.context)}</span>
       </div>`
     ).join('');
@@ -114,24 +126,40 @@ const Search = {
     this.resultsContainer.querySelectorAll('.search-result').forEach(el => {
       el.addEventListener('click', () => {
         this.resultsContainer.classList.add('hidden');
-        if (this.onResultClick) this.onResultClick(el.dataset.path);
+        if (this.onResultClick) this.onResultClick(el.dataset.path, el.dataset.instanceId);
       });
     });
   },
 
   async doContentSearch(query) {
+    const requestId = ++this.searchRequestId;
     if (!query || query.length < MIN_CONTENT_SEARCH_LENGTH) {
       this.resultsContainer.classList.add('hidden');
       return;
     }
     try {
       const data = await API.search(query);
-      if (data.results.length === 0) {
+      if (requestId !== this.searchRequestId || query !== this.query) return;
+      const results = (data.results || []).filter(result => this.matchesResultFilters(result));
+      if (results.length === 0) {
         this.resultsContainer.classList.add('hidden');
         return;
       }
-      this.renderResults(data.results);
+      this.renderResults(results);
     } catch {}
+  },
+
+  matchesResultFilters(result) {
+    if (this.filters.localOnly && result.isSymlink) return false;
+    if (this.filters.linkedOnly && !result.isSymlink) return false;
+    if (this.filters.hasScripts && !result.hasScripts) return false;
+    if (this.filters.globalLocation && result.location !== 'global') return false;
+    if (this.filters.projectLocation && result.location !== 'project') return false;
+    if (this.filters.externalLocation && result.location !== 'external') return false;
+    const activeAgents = Object.keys(AGENT_FILTERS)
+      .filter(key => this.filters[key])
+      .map(key => AGENT_FILTERS[key]);
+    return !activeAgents.length || activeAgents.some(agent => (result.agents || []).includes(agent));
   },
 
   filterByQuery(skills, query) {
@@ -154,8 +182,11 @@ const Search = {
     if (filters.localOnly) filtered = filtered.filter(s => !s.isSymlink);
     if (filters.linkedOnly) filtered = filtered.filter(s => s.isSymlink);
     if (filters.hasScripts) filtered = filtered.filter(s => this.hasScriptFile(s));
-    if (filters.globalLocation) filtered = filtered.filter(s => !s.location || s.location === 'global');
-    if (filters.localLocation) filtered = filtered.filter(s => s.location === 'local');
+    if (filters.globalLocation) filtered = filtered.filter(s => s.location === 'global');
+    if (filters.projectLocation) filtered = filtered.filter(s => s.location === 'project');
+    if (filters.externalLocation) filtered = filtered.filter(s => s.location === 'external');
+    const activeAgents = Object.keys(AGENT_FILTERS).filter(key => filters[key]).map(key => AGENT_FILTERS[key]);
+    if (activeAgents.length) filtered = filtered.filter(s => activeAgents.some(agent => (s.agents || []).includes(agent)));
     return filtered;
   },
 };
