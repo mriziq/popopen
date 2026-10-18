@@ -24,7 +24,7 @@ Popopen runs a local web server and opens in the developer’s browser. Skills a
 
 ## Capabilities and Constraints
 
-- The viewer discovers global, project, and configured external skill folders for Claude Code, Codex, OpenCode, Hermes, and Pi. Shared folders are represented once with all supported agents listed; same-named copies remain separate instances.
+- The viewer discovers global, project, and configured external skill folders for Claude Code, Codex, OpenCode, Hermes, and Pi. A physical skill directory is one instance even when several agent paths or symlinks lead to it; Popopen combines its agent availability and retains all discovered paths. Distinct physical directories with the same name remain separate instances.
 - Current capabilities include source-aware browsing of discovered skill files, rendered previews for Markdown files, Markdown editing, frontmatter and permission editing, sidebar filtering by skill metadata and source, dashboard analytics, bulk operations, backpack ZIP export, Claude CLI update checks for eligible installed skills, and uninstall.
 - Backpack export preserves each selected skill folder under a unique archive path and includes a manifest plus agent setup instructions. The receiving agent can install the skills without Popopen installed.
 - V1 portability uses direct agent setup from the backpack; Popopen has no separate import screen.
@@ -32,7 +32,7 @@ Popopen runs a local web server and opens in the developer’s browser. Skills a
 - The main library should lead on first open; make Backpack easy to find as a secondary action.
 - First-class viewer and backpack targets selected by the user: Claude Code, Codex, OpenCode, Hermes, and Pi.
 - The viewer scans documented global and project skill locations. Hermes external directories are read from `~/.hermes/config.yaml`; Popopen marks project skills as untrusted unless the current project is listed in Hermes trust settings. Project discovery disabled in Hermes config is shown as unavailable.
-- Group same-named skills in the library, while showing each distinct on-disk instance and its agent/location.
+- Group same-named physical skills in the library, while showing each distinct on-disk instance and its agent/location. Merge symlink aliases to the same physical directory into one instance and combine their agent availability.
 - Backpack export selects individual instances; include each selected copy distinctly without merging it into another copy.
 - These agents use different discovery paths: Claude Code `.claude/skills`; Codex `.agents/skills`; OpenCode `.opencode/skills`; Hermes `.hermes/skills` or `.agents/skills`; Pi `.pi/skills`. Compatible shared paths are included where each agent documents them.
 - Destination setup instructions list common paths and require the agent to ask before replacing an existing skill.

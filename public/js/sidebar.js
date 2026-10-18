@@ -76,6 +76,9 @@ const Sidebar = {
     const location = skill.location || 'global';
     const scopeTitle = scope === 'installed' ? 'Installed from remote source' : 'Skill folder';
     const scopeLabel = scope === 'installed' ? 'INSTALLED' : scope === 'custom' ? 'CUSTOM' : 'LINKED';
+    const sourceTitle = (skill.discoveryPaths || [{ path: skill.sourcePath }])
+      .map(source => source.path)
+      .join('\n');
     const toggleTitle = disabledByModel ? 'Model invocation disabled' : 'Model invocation enabled';
     const toggleIcon = disabledByModel ? '&#9676;' : '&#9679;';
     const locationLabel = skill.location === 'project' ? 'PROJECT' : skill.location === 'external' ? 'EXTERNAL' : 'GLOBAL';
@@ -86,7 +89,7 @@ const Sidebar = {
       <span class="folder-icon">&#128193;</span>
       <span class="skill-name-label">${escapeSkillText(skill.name)}</span>
       <span class="scope-badge scope-badge-${scope}" title="${scopeTitle}">${scopeLabel}</span>
-      <span class="scope-badge scope-badge-local" title="${escapeSkillText(skill.sourcePath)}">${locationLabel}</span>
+      <span class="scope-badge scope-badge-local" title="${escapeSkillText(sourceTitle)}">${locationLabel}</span>
       <span class="instance-agents" title="Available to: ${escapeSkillText(agents)}">${escapeSkillText(agents || 'Unknown agent')}</span>
       ${skill.hermesStatus === 'untrusted' ? '<span class="scope-badge" title="Hermes needs the user to trust this project before loading its project skills">HERMES UNTRUSTED</span>' : ''}
       ${skill.hermesStatus === 'discovery-disabled' ? '<span class="scope-badge" title="Project skill discovery is disabled in Hermes configuration">HERMES DISABLED</span>' : ''}

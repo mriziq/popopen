@@ -6,7 +6,7 @@ Individual developers manage skills across Claude Code, Codex, OpenCode, Hermes,
 
 ## Outcome and product truth
 
-Open directly to the skill library. Group same-named skills while keeping each on-disk instance distinct and labeled by agent and source scope. Let the developer inspect and edit the exact instance they chose.
+Open directly to the skill library. Group same-named skills while keeping each distinct physical folder separate and labeled by agent and source scope. If several agent paths or symlinks point to the same physical folder, show one instance with combined agent availability and retain the paths as provenance. Let the developer inspect and edit the exact instance they chose.
 
 The Backpack exports selected instances as an ordinary ZIP with their original files preserved and a concise agent-readable inventory and installation guide. The receiving agent installs to its own supported location without Popopen. It asks before replacing an existing skill with the same name.
 
@@ -22,5 +22,5 @@ Use a plain-spoken, calm, precise voice without hype. Explain unfamiliar skill t
 - Scan documented global/project locations for the five selected agents. Read configured Hermes external directories; distinguish project skills from trusted/loaded availability.
 - Preserve current editing, frontmatter, permissions, dashboard, update, and uninstall capabilities while making instance-targeted operations unambiguous.
 - No separate Popopen import screen in v1; import is handled by the receiving agent from the backpack file.
-- Do not silently merge same-named skill instances or overwrite a destination skill.
+- Do not merge distinct physical folders just because their skill names match, and never overwrite a destination skill silently.
 - Code-first implementation.

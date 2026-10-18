@@ -85,15 +85,17 @@ function buildSkillRecord(entry, realPath, isSymlink, location, lockData, source
   const parsed = parseFrontmatter(path.join(realPath, 'SKILL.md'));
   const fileList = files.filter(f => f.type === 'file').map(f => f.name);
   const lock = (lockData || {})[entry.name] || {};
+  const sourceAgents = [...new Set(agents || [])].sort();
 
   return {
-    id: stableId(sourcePath),
+    id: stableId(realPath),
     name: entry.name,
     description: parsed?.frontmatter?.description || '',
     scope: isSymlink ? 'installed' : 'custom',
     location,
-    sourcePath,
-    agents: [...new Set(agents || [])].sort(),
+    sourcePath: isSymlink ? sourcePath : realPath,
+    discoveryPaths: [{ path: sourcePath, location, isSymlink, agents: sourceAgents }],
+    agents: sourceAgents,
     hermesTrusted: hermesStatus === 'trusted' ? true : hermesStatus === 'untrusted' ? false : null,
     hermesStatus: hermesStatus || null,
     isSymlink,
@@ -197,12 +199,27 @@ function scanSkills() {
   const skills = [];
   for (const root of roots) {
     for (const skill of scanDir(root.dir, root.location, root.lock, root.agents, root.hermesStatus ?? null)) {
-      const existing = seen.get(skill.sourcePath);
+      const key = path.resolve(skill.realPath);
+      const existing = seen.get(key);
       if (existing) {
+        for (const source of skill.discoveryPaths) {
+          const existingSource = existing.discoveryPaths.find(item => item.path === source.path);
+          if (existingSource) {
+            existingSource.agents = [...new Set([...existingSource.agents, ...source.agents])].sort();
+          } else {
+            existing.discoveryPaths.push(source);
+          }
+        }
         existing.agents = [...new Set([...existing.agents, ...skill.agents])].sort();
+        if (existing.isSymlink && !skill.isSymlink) {
+          const discoveryPaths = existing.discoveryPaths;
+          Object.assign(existing, skill);
+          existing.discoveryPaths = discoveryPaths;
+          existing.agents = [...new Set(discoveryPaths.flatMap(source => source.agents))].sort();
+        }
         continue;
       }
-      seen.set(skill.sourcePath, skill);
+      seen.set(key, skill);
       skills.push(skill);
     }
   }
