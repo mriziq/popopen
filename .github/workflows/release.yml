@@ -3,6 +3,13 @@ name: Release
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      publish_current:
+        description: Publish the current package.json version to npm
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -21,14 +28,17 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org
+          node-version: 24
           cache: npm
 
       - run: npm install --no-audit --no-fund
 
-      - run: npx semantic-release
+      - name: Publish current version
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_current
+        run: npm publish --provenance --access public
+
+      - name: Release
+        if: github.event_name == 'push'
+        run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
