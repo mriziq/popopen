@@ -31,11 +31,19 @@ const Viewer = {
     return bar;
   },
 
-  render(body, frontmatter) {
+  render(body, frontmatter, renderedMarkdown) {
     this.container.innerHTML = '';
 
     if (frontmatter && Object.keys(frontmatter).length > 0) {
       this.container.appendChild(this.renderFrontmatterBar(frontmatter));
+    }
+
+    if (renderedMarkdown !== undefined) {
+      const content = document.createElement('div');
+      content.className = 'md-content';
+      content.innerHTML = renderedMarkdown;
+      this.container.appendChild(content);
+      return;
     }
 
     const pre = document.createElement('pre');

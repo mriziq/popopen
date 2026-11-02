@@ -84,6 +84,14 @@ function buildTour(Shepherd) {
     { element: '#search-container', on: 'right' }
   );
 
+  // Step 5.5 — Backpack
+  step(
+    'backpack',
+    'Pack a backpack',
+    'Moving skills to another computer? Open <b>Backpack</b>, choose the copies to carry, and download one ZIP. Your agent on the other computer handles setup and asks before replacing anything.',
+    { element: '#btn-backpack', on: 'bottom' }
+  );
+
   // Step 6 — Content area
   tour.addStep({
     id: 'content-area',

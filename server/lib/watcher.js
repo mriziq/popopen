@@ -1,16 +1,18 @@
 const chokidar = require('chokidar');
-const { getSkillsDir } = require('./scanner');
+const { getSkillsDirs } = require('./scanner');
 
 let clients = [];
 let watcher = null;
+let watcherWarningShown = false;
 
 function startWatcher() {
-  const skillsDir = getSkillsDir();
+  const skillsDirs = getSkillsDirs();
+  watcherWarningShown = false;
 
-  watcher = chokidar.watch(skillsDir, {
+  watcher = chokidar.watch(skillsDirs, {
     ignoreInitial: true,
     followSymlinks: true,
-    ignored: /(^|[\/\\])\.|node_modules/,
+    ignored: /(^|[\/\\])node_modules([\/\\]|$)/,
     depth: 5,
   });
 
@@ -19,6 +21,18 @@ function startWatcher() {
     clients.forEach(res => {
       res.write(`data: ${data}\n\n`);
     });
+  });
+
+  watcher.on('error', (err) => {
+    if (err.code === 'EMFILE') {
+      if (!watcherWarningShown) console.warn('Live file watching is unavailable because this computer reached its open-file limit. Popopen remains usable; reload the page to refresh changes.');
+      watcherWarningShown = true;
+      const failedWatcher = watcher;
+      watcher = null;
+      failedWatcher?.close();
+      return;
+    }
+    console.warn(`Skill file watcher warning: ${err.message}`);
   });
 }
 

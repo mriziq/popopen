@@ -1,11 +1,10 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
+const MarkdownIt = require('markdown-it');
 const { scanSkills, readSkillFile } = require('../lib/scanner');
-
-const SKILLS_DIR = process.env.SKILLS_DIR || path.join(os.homedir(), '.claude', 'skills');
 const VALID_NAME_PATTERN = /[^a-zA-Z0-9_-]/g;
+const markdown = new MarkdownIt({ html: false });
 
 const router = express.Router();
 
@@ -15,11 +14,16 @@ router.get('/skills', (req, res) => {
 
 router.get('/files', (req, res) => {
   const filePath = req.query.path;
+  const instanceId = req.query.instanceId;
   if (!filePath) {
     return res.status(400).json({ error: 'path query parameter required' });
   }
   try {
-    res.json(readSkillFile(filePath));
+    const file = readSkillFile(filePath, instanceId);
+    if (path.extname(filePath).toLowerCase() === '.md') {
+      file.renderedBody = markdown.render(file.body);
+    }
+    res.json(file);
   } catch (err) {
     res.status(404).json({ error: err.message });
   }
@@ -41,25 +45,39 @@ function validateRenameInput(oldName, newName) {
 }
 
 router.post('/skills/rename', (req, res) => {
-  const { oldName, newName } = req.body;
+  const { instanceId, oldName, newName } = req.body;
   const validation = validateRenameInput(oldName, newName);
   if (validation.error) {
     return res.status(validation.status).json({ error: validation.error });
   }
 
   const { safeName } = validation;
-  const oldPath = path.join(SKILLS_DIR, oldName);
-  const newPath = path.join(SKILLS_DIR, safeName);
+  const skills = scanSkills();
+  const matches = skills.filter(item => item.name === oldName);
+  const skill = instanceId ? skills.find(item => item.id === instanceId) : matches.length === 1 ? matches[0] : null;
+  if (!skill) {
+    if (!instanceId && matches.length > 1) return res.status(409).json({ error: 'Multiple copies have this name; instance id required' });
+    return res.status(404).json({ error: `Skill "${oldName}" not found` });
+  }
+
+  if (skills.some(item => item.sourcePath !== skill.sourcePath && item.name === safeName && path.dirname(item.sourcePath) === path.dirname(skill.sourcePath))) {
+    return res.status(409).json({ error: 'A skill with that name already exists' });
+  }
+
+  if (skill.isSymlink) {
+    return res.status(403).json({ error: 'Cannot rename installed skills' });
+  }
+
+  const oldPath = skill.realPath;
+  const newPath = path.join(path.dirname(oldPath), safeName);
 
   try {
-    if (fs.lstatSync(oldPath).isSymbolicLink()) {
-      return res.status(403).json({ error: 'Cannot rename installed skills' });
-    }
     if (fs.existsSync(newPath)) {
       return res.status(409).json({ error: 'A skill with that name already exists' });
     }
     fs.renameSync(oldPath, newPath);
-    res.json({ ok: true, name: safeName });
+    const renamed = scanSkills().find(item => item.sourcePath === newPath);
+    res.json({ ok: true, name: safeName, instanceId: renamed?.id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

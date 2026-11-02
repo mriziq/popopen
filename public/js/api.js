@@ -29,13 +29,15 @@ const API = {
     return data.skills;
   },
 
-  getFile(path) {
-    return fetchJsonOrThrow(`/api/files?path=${encodeURIComponent(path)}`, undefined, `Failed to load ${path}`);
+  getFile(path, instanceId) {
+    const instance = instanceId ? `&instanceId=${encodeURIComponent(instanceId)}` : '';
+    return fetchJsonOrThrow(`/api/files?path=${encodeURIComponent(path)}${instance}`, undefined, `Failed to load ${path}`);
   },
 
-  saveFile(path, content) {
+  saveFile(path, content, instanceId) {
+    const instance = instanceId ? `&instanceId=${encodeURIComponent(instanceId)}` : '';
     return fetchJsonOrThrow(
-      `/api/files?path=${encodeURIComponent(path)}`,
+      `/api/files?path=${encodeURIComponent(path)}${instance}`,
       { method: 'PUT', body: content },
       'Failed to save'
     );
@@ -59,10 +61,6 @@ const API = {
 
   getAnalytics() {
     return fetchJson('/api/analytics');
-  },
-
-  search(query) {
-    return fetchJson(`/api/search?q=${encodeURIComponent(query)}`);
   },
 
   getDashboard() {
@@ -120,6 +118,10 @@ const API = {
 
   async bulkExport(skills) {
     const res = await fetch('/api/bulk/export', postJson(null, { skills }));
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'Backpack export failed');
+    }
     return res.blob();
   },
 
@@ -127,8 +129,8 @@ const API = {
     return fetchJson(`/api/bulk/compare-tools?skills=${encodeURIComponent(skills.join(','))}`);
   },
 
-  async renameSkill(oldName, newName) {
-    const res = await fetch('/api/skills/rename', postJson(null, { oldName, newName }));
+  async renameSkill(instanceId, oldName, newName) {
+    const res = await fetch('/api/skills/rename', postJson(null, { instanceId, oldName, newName }));
     let data;
     try {
       data = await res.json();

@@ -10,7 +10,7 @@ const Bulk = {
       <span class="bulk-count"></span>
       <button class="btn-sm" id="bulk-enable">Enable All</button>
       <button class="btn-sm" id="bulk-disable">Disable All</button>
-      <button class="btn-sm" id="bulk-export">Export ZIP</button>
+      <button class="btn-sm" id="bulk-export">Create backpack</button>
       <button class="btn-sm" id="bulk-compare">Compare Tools</button>
       <button class="btn-sm" id="bulk-clear">Clear</button>
     `;
@@ -18,7 +18,7 @@ const Bulk = {
 
     this.actionBar.querySelector('#bulk-enable').addEventListener('click', () => this.bulkToggle(false));
     this.actionBar.querySelector('#bulk-disable').addEventListener('click', () => this.bulkToggle(true));
-    this.actionBar.querySelector('#bulk-export').addEventListener('click', () => this.exportZip());
+    this.actionBar.querySelector('#bulk-export').addEventListener('click', () => this.openBackpack());
     this.actionBar.querySelector('#bulk-compare').addEventListener('click', () => this.compareTools());
     this.actionBar.querySelector('#bulk-clear').addEventListener('click', () => {
       this.selectedSkills.clear();
@@ -43,7 +43,7 @@ const Bulk = {
       return;
     }
     this.actionBar.classList.remove('hidden');
-    this.actionBar.querySelector('.bulk-count').textContent = `${this.selectedSkills.size} skill(s) selected`;
+    this.actionBar.querySelector('.bulk-count').textContent = `${this.selectedSkills.size} ${this.selectedSkills.size === 1 ? 'skill copy' : 'skill copies'} selected`;
   },
 
   async bulkToggle(disableValue) {
@@ -56,19 +56,8 @@ const Bulk = {
     }
   },
 
-  async exportZip() {
-    const skills = [...this.selectedSkills];
-    try {
-      const blob = await API.bulkExport(skills);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'skills-export.zip';
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      alert('Export failed: ' + err.message);
-    }
+  openBackpack() {
+    if (typeof Backpack !== 'undefined') Backpack.open();
   },
 
   async compareTools() {
@@ -89,14 +78,14 @@ const Bulk = {
               <thead>
                 <tr>
                   <th>Tool</th>
-                  ${skills.map(s => `<th>${s}</th>`).join('')}
+                  ${skills.map(id => `<th>${data.skills[id]?.name || 'Skill'}<br><small>${data.skills[id]?.sourcePath || ''}</small></th>`).join('')}
                 </tr>
               </thead>
               <tbody>
                 ${data.allTools.map(tool => `
                   <tr>
                     <td><code>${tool}</code></td>
-                    ${skills.map(s => `<td class="check-cell">${data.skills[s]?.includes(tool) ? '<span class="check-mark">&#10003;</span>' : ''}</td>`).join('')}
+                    ${skills.map(id => `<td class="check-cell">${data.skills[id]?.tools.includes(tool) ? '<span class="check-mark">&#10003;</span>' : ''}</td>`).join('')}
                   </tr>
                 `).join('')}
               </tbody>
