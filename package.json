@@ -1,6 +1,6 @@
 {
   "name": "popopen",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A local workspace for browsing, editing, and moving coding-agent skills",
   "main": "server/index.js",
   "bin": {

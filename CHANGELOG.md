@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/mriziq/popopen/compare/v1.3.0...v1.4.0) (2026-11-02)
+
+
+### Features
+
+* expand multi-agent skill library and add guided backpack flow ([3dc41eb](https://github.com/mriziq/popopen/commit/3dc41ebf83e535d61799cda9ccc1f0f65b65d9cf))
+
 # [1.3.0](https://github.com/mriziq/popopen/compare/v1.2.0...v1.3.0) (2026-05-13)
 
 
