@@ -332,11 +332,7 @@
   if (btnCollapseAll) btnCollapseAll.addEventListener('click', () => Sidebar.toggleAllFolders(btnCollapseAll));
   const btnBackpack = document.getElementById('btn-backpack');
   if (btnBackpack) btnBackpack.addEventListener('click', () => {
-    if (!Bulk.selectedSkills.size) {
-      if (typeof Toast !== 'undefined') Toast.show('Select skill copies in the library to create a backpack.');
-      return;
-    }
-    Bulk.exportZip();
+    if (typeof Backpack !== 'undefined') Backpack.open();
   });
 
   document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -363,7 +359,11 @@
     if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
 
     const modal = document.querySelector('.modal-overlay');
-    if (modal) { modal.remove(); return; }
+    if (modal) {
+      if (modal.classList.contains('bp-overlay') && typeof Backpack !== 'undefined') Backpack.close();
+      else modal.remove();
+      return;
+    }
 
     if (isEditing) { cancelEdit(); return; }
 

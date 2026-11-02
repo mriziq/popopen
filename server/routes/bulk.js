@@ -40,7 +40,7 @@ router.post('/bulk/export', express.json(), (req, res) => {
   }
 
   res.setHeader('Content-Type', 'application/zip');
-  res.setHeader('Content-Disposition', 'attachment; filename=skills-export.zip');
+  res.setHeader('Content-Disposition', `attachment; filename=popopen-backpack-${new Date().toISOString().slice(0, 10)}.zip`);
 
   const archive = archiver('zip', { zlib: { level: 9 } });
   archive.on('error', (err) => res.destroy(err));
@@ -49,30 +49,47 @@ router.post('/bulk/export', express.json(), (req, res) => {
   const manifest = {
     format: 'popopen-backpack',
     version: 1,
+    createdAt: new Date().toISOString(),
+    count: selected.length,
     skills: selected.map(skill => ({
       name: skill.name,
       bundlePath: `skills/${skill.name}--${skill.id.slice(0, 8)}`,
       location: skill.location,
       agents: skill.agents,
+      description: skill.description || '',
+      fileCount: skill.fileCount ?? skill.files.length,
     })),
   };
   archive.append(JSON.stringify(manifest, null, 2), { name: 'manifest.json' });
   const instructions = `# Popopen skills backpack
 
-This bundle contains ${selected.length} selected skill instance${selected.length === 1 ? '' : 's'}. Skill folders are preserved under skills/. See manifest.json for each skill's original name and folder path.
+This backpack contains ${selected.length} skill ${selected.length === 1 ? 'copy' : 'copies'}, exported from Popopen on ${manifest.createdAt.slice(0, 10)}. Each folder under skills/ is a complete skill folder. manifest.json lists the original name, archive path, agent availability, and description for every entry.
 
-## Install with an agent
+## Your job
 
-Point your coding agent at this ZIP or its extracted folder and ask it to install the selected skills for that agent. Copy each complete folder to the agent's documented skills directory and name the destination folder using the original skill name in manifest.json. Preserve all files.
+Install the selected skills for the coding agent or agents the user names. Do not install them for every agent unless the user asks.
 
-Common locations:
-- Claude Code: global ~/.claude/skills; project .claude/skills.
-- Codex: global ~/.agents/skills; project .agents/skills.
-- OpenCode: global ~/.config/opencode/skills; project .opencode/skills. It also reads compatible .agents/skills and .claude/skills locations.
-- Hermes: global ~/.hermes/skills; project .hermes/skills or .agents/skills. Project skills require the user's trust configuration before Hermes loads them.
-- Pi: global ~/.pi/agent/skills; project .pi/skills. It also reads compatible .agents/skills and .claude/skills locations.
+1. Read manifest.json and match each entry to its folder under skills/.
+2. Choose the destination that matches the user's agent:
+   - Claude Code: global ~/.claude/skills; project .claude/skills.
+   - Codex: global ~/.agents/skills; project .agents/skills.
+   - OpenCode: global ~/.config/opencode/skills; project .opencode/skills. It also reads compatible .agents/skills and .claude/skills locations.
+   - Hermes: global ~/.hermes/skills; project .hermes/skills or .agents/skills. Project skills require the user's trust configuration before Hermes loads them.
+   - Pi: global ~/.pi/agent/skills; project .pi/skills. It also reads compatible .agents/skills and .claude/skills locations.
+3. Copy the whole bundle folder to the destination and name the destination folder with the original skill name from manifest.json.
+   Example: skills/commit-helper--a1b2c3d4 becomes ~/.claude/skills/commit-helper.
+   Keep every file and subfolder, including scripts, references, and hidden files.
+4. Before replacing a destination skill with the same name, show the conflict and ask the user whether to keep the existing skill, replace it, or install under a new name. Never overwrite silently.
+5. If two bundle entries have the same original name, do not merge them. Ask the user which one to install or whether to rename one.
+6. After installing, verify that each destination contains SKILL.md. Report the destination paths and any conflicts you encountered.
 
-Before replacing a destination skill with the same name, show the conflict and ask whether to keep, replace, or rename it. Never overwrite silently. If two bundle entries have the same name, ask which one to install or whether to rename one; do not merge them. This bundle does not require Popopen.
+## Common handoff prompt
+
+The user may hand you this backpack with:
+
+"Install every skill in this backpack and follow AGENT-INSTRUCTIONS.md. Ask me before replacing a skill that already exists."
+
+If the user wants only some of the skills, ask which entries to install before copying anything. Do not modify the source ZIP. Popopen is not required on this computer.
 `;
   archive.append(instructions, { name: 'AGENT-INSTRUCTIONS.md' });
 

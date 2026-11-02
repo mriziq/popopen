@@ -18,7 +18,7 @@ const Bulk = {
 
     this.actionBar.querySelector('#bulk-enable').addEventListener('click', () => this.bulkToggle(false));
     this.actionBar.querySelector('#bulk-disable').addEventListener('click', () => this.bulkToggle(true));
-    this.actionBar.querySelector('#bulk-export').addEventListener('click', () => this.exportZip());
+    this.actionBar.querySelector('#bulk-export').addEventListener('click', () => this.openBackpack());
     this.actionBar.querySelector('#bulk-compare').addEventListener('click', () => this.compareTools());
     this.actionBar.querySelector('#bulk-clear').addEventListener('click', () => {
       this.selectedSkills.clear();
@@ -56,19 +56,8 @@ const Bulk = {
     }
   },
 
-  async exportZip() {
-    const skills = [...this.selectedSkills];
-    try {
-      const blob = await API.bulkExport(skills);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'popopen-skills-backpack.zip';
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      alert('Export failed: ' + err.message);
-    }
+  openBackpack() {
+    if (typeof Backpack !== 'undefined') Backpack.open();
   },
 
   async compareTools() {

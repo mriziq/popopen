@@ -48,7 +48,7 @@ PORT=4000 popopen   # use a different port
 - **Frontmatter editor** — toggle skill settings (`disable-model-invocation`, descriptions, etc.) without touching raw YAML
 - **Search** — filter the skill library by name, description, file name, agent, and location
 - **Dashboard** — usage analytics (views, edits, saves) tracked locally
-- **Backpack** — select skill copies and export them in a ZIP with an inventory and agent-readable setup instructions; the receiving computer does not need Popopen
+- **Backpack** — follow a guided packing flow: choose skill copies, watch them fill a backpack, then download a ZIP with an inventory and agent-readable setup instructions; the receiving computer does not need Popopen
 - **Bulk operations** — batch toggle frontmatter fields and compare declared tools across selected copies
 - **Update checker** — checks eligible installed skills against their GitHub source; applying an update runs the Claude Code CLI through `npx`
 - **Uninstall** — remove installed or custom skills from the UI
@@ -57,7 +57,7 @@ PORT=4000 popopen   # use a different port
 
 Popopen is a local Express server. It scans documented global and project skill directories for Claude Code, Codex, OpenCode, Hermes, and Pi. Hermes external directories are read from `~/.hermes/config.yaml`. A project skill is not treated as replacing a global copy: each on-disk copy appears separately, with its location and supported agents shown in the library. Hermes project skills are marked untrusted until the current project is trusted in Hermes settings.
 
-The Backpack is a standard ZIP containing each selected skill folder, `manifest.json`, and `AGENT-INSTRUCTIONS.md`. Extract it or point a coding agent at the ZIP and ask the agent to install the selected skills. The instructions list common agent locations and require the agent to ask before replacing an existing same-named skill. Popopen is not required on the receiving computer.
+The Backpack flow opens from the sidebar and walks through choosing skill copies, packing them, and handing them off. The result is a standard ZIP containing each selected skill folder, `manifest.json`, and `AGENT-INSTRUCTIONS.md`. Extract it or point a coding agent at the ZIP and ask the agent to install the selected skills. The instructions list common agent locations and require the agent to ask before replacing an existing same-named skill. Popopen is not required on the receiving computer.
 
 The server binds to `127.0.0.1` only and is not accessible from other machines on your network.
 
